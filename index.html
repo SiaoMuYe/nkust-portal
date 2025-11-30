@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- === 隱私設定 === -->
+    <!-- === 隱私設定 (禁止搜尋引擎收錄) === -->
     <meta name="robots" content="noindex, nofollow">
 
     <title>高科大 | 學生系統整合入口</title>
     
-    <!-- === App Icon Settings === -->
+    <!-- === App Icon Settings (外部顯示：實心書本) === -->
     <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.65) translate(-256, -256)'/%3E%3C/svg%3E">
     <link id="apple-touch-icon" rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.65) translate(-256, -256)'/%3E%3C/svg%3E">
 
@@ -50,12 +50,11 @@
             --brand-accent: #d97706;    
         }
 
-        /* 這裡移除了 'invisible' 類別的依賴，改為預設顯示 */
         body {
             font-family: 'Noto Sans TC', sans-serif;
             background-color: var(--bg-body);
             color: var(--text-main);
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: all 0.3s ease;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -154,22 +153,29 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col invisible">
 
     <!-- Header -->
     <header class="sticky top-0 z-50 backdrop-blur-md bg-opacity-95">
         <div class="max-w-3xl mx-auto px-5 py-3 flex justify-between items-center">
             <div class="flex items-center gap-4">
+                <!-- Custom Logo (內部：學士帽) -->
                 <div class="w-14 h-14 rounded-2xl bg-[#002d72] dark:bg-[#d97706] flex items-center justify-center shadow-md flex-shrink-0 relative overflow-hidden group transition-colors duration-300">
                     <div class="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     <i class="fa-solid fa-graduation-cap text-3xl text-white drop-shadow-sm transform group-hover:scale-110 transition-transform duration-300"></i>
                 </div>
+                
+                <!-- Title -->
                 <div class="leading-tight flex flex-col justify-center">
                     <h1 class="font-bold text-lg sm:text-xl tracking-wide text-[var(--text-main)]">國立高雄科技大學</h1>
                     <p class="text-xs text-[var(--text-sub)] font-medium mt-0.5">學生系統整合入口</p>
                 </div>
             </div>
-            <button onclick="toggleDarkMode()" class="w-10 h-10 rounded-full hover:bg-[var(--icon-bg)] flex items-center justify-center text-[var(--text-sub)] transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700 relative group">
+
+            <!-- Theme Toggle Button (3-State) -->
+            <!-- Updated to use toggleThemeMode() -->
+            <button onclick="toggleThemeMode()" class="w-10 h-10 rounded-full hover:bg-[var(--icon-bg)] flex items-center justify-center text-[var(--text-sub)] transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700 relative group">
+                <!-- Initial icon set by JS -->
                 <i id="themeIcon" class="fa-solid fa-sun text-lg"></i>
             </button>
         </div>
@@ -200,7 +206,6 @@
                 </div>
             </div>
         </div>
-
         <div id="appContainer" class="space-y-8"></div>
         <div id="noResults" class="hidden flex flex-col items-center justify-center py-12 text-[var(--text-sub)]">
             <div class="w-16 h-16 bg-[var(--icon-bg)] rounded-full flex items-center justify-center mb-3">
@@ -216,7 +221,7 @@
     <div id="theme-toast">已切換模式</div>
 
     <script>
-        // Service Worker (PWA)
+        // Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
@@ -224,6 +229,7 @@
             });
         }
 
+        // Icons (Book for External)
         const iconBlue = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.65) translate(-256, -256)'/%3E%3C/svg%3E";
         const iconAmber = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23d97706'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.65) translate(-256, -256)'/%3E%3C/svg%3E";
 
@@ -232,48 +238,80 @@
             if(link) link.href = isDark ? iconAmber : iconBlue;
         }
 
+        // --- 3-State Logic: Light -> Dark -> Auto ---
+        let currentMode = 'light'; 
+
         function initTheme() {
-            const stored = localStorage.getItem('theme');
-            let isDark = false;
-            if (stored === 'dark') isDark = true;
-            else if (stored === 'light') isDark = false;
-            else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) isDark = true;
-
-            // 即使沒有 JS 支援，HTML 也已移除 invisible，所以至少會顯示淺色
-            if (isDark) enableDarkMode(false);
-            else disableDarkMode(false);
-            
-            updateGreeting();
-        }
-
-        function enableDarkMode(save = true) {
-            document.body.classList.add('dark-mode');
-            document.documentElement.classList.add('dark');
-            const icon = document.getElementById('themeIcon');
-            if(icon) { icon.className = 'fa-solid fa-sun text-lg'; }
-            updateFavicon(true);
-            if(save) localStorage.setItem('theme', 'dark');
-        }
-
-        function disableDarkMode(save = true) {
-            document.body.classList.remove('dark-mode');
-            document.documentElement.classList.remove('dark');
-            const icon = document.getElementById('themeIcon');
-            if(icon) { icon.className = 'fa-solid fa-moon text-lg'; }
-            updateFavicon(false);
-            if(save) localStorage.setItem('theme', 'light');
-        }
-
-        function toggleDarkMode() {
-            const isDark = document.body.classList.contains('dark-mode');
-            if (isDark) {
-                disableDarkMode(true);
-                showToast("已切換至淺色模式");
+            const stored = localStorage.getItem('theme_preference');
+            if (stored) {
+                currentMode = stored;
             } else {
-                enableDarkMode(true);
-                showToast("已切換至深色模式");
+                currentMode = 'light'; 
             }
-            updateGreeting();
+            applyTheme(currentMode);
+            document.body.classList.remove('invisible');
+        }
+
+        function applyTheme(mode) {
+            let isDark = false;
+            if (mode === 'dark') {
+                isDark = true;
+            } else if (mode === 'light') {
+                isDark = false;
+            } else if (mode === 'auto') {
+                isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            }
+
+            if (isDark) {
+                document.body.classList.add('dark-mode');
+                document.documentElement.classList.add('dark');
+                updateFavicon(true);
+            } else {
+                document.body.classList.remove('dark-mode');
+                document.documentElement.classList.remove('dark');
+                updateFavicon(false);
+            }
+
+            const icon = document.getElementById('themeIcon');
+            // No colors, just shapes
+            if (mode === 'light') {
+                icon.className = 'fa-solid fa-sun text-lg'; 
+            } else if (mode === 'dark') {
+                icon.className = 'fa-solid fa-moon text-lg'; 
+            } else {
+                icon.className = 'fa-solid fa-circle-half-stroke text-lg'; 
+            }
+
+            updateGreeting(isDark);
+        }
+
+        function toggleThemeMode() {
+            let nextMode = 'light';
+            let toastText = "已切換至淺色模式";
+
+            if (currentMode === 'light') {
+                nextMode = 'dark';
+                toastText = "已切換至深色模式";
+            } else if (currentMode === 'dark') {
+                nextMode = 'auto';
+                toastText = "已切換至自動跟隨系統";
+            } else {
+                nextMode = 'light';
+                toastText = "已切換至淺色模式";
+            }
+
+            currentMode = nextMode;
+            localStorage.setItem('theme_preference', nextMode);
+            applyTheme(nextMode);
+            showToast(toastText);
+        }
+
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                if (currentMode === 'auto') {
+                    applyTheme('auto');
+                }
+            });
         }
 
         function showToast(text) {
@@ -364,17 +402,14 @@
                     section.className = "animate-card";
                     section.style.animationDelay = `${delayCounter * 0.1}s`;
                     delayCounter++;
-
                     section.innerHTML = `
                         <div class="flex items-center gap-3 mb-4">
                             <span class="w-1 h-5 rounded-full bg-[var(--brand-accent)] opacity-80"></span>
                             <h2 class="text-sm font-bold text-[var(--text-sub)] uppercase tracking-wider">${cat.title}</h2>
                         </div>
                     `;
-
                     const grid = document.createElement('div');
                     grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-4"; 
-
                     filteredItems.forEach(app => {
                         const card = document.createElement('a');
                         card.href = app.url;
