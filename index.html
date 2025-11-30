@@ -3,21 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 隱私設定：禁止搜尋引擎收錄 -->
     <meta name="robots" content="noindex, nofollow">
-    <title>高科大 | 學生系統整合入口</title>
+
+    <title>國立高雄科技大學 | 學生系統整合入口</title>
     
-    <!-- Icons -->
-    <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.65) translate(-256, -256)'/%3E%3C/svg%3E">
-    <link id="apple-touch-icon" rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.65) translate(-256, -256)'/%3E%3C/svg%3E">
+    <!-- === App Icon Settings (縮小至 0.45 比例，確保不被裁切) === -->
+    <!-- 注意：這裡和 manifest.json 的縮放比例必須一致 -->
+    <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.45) translate(-256, -256)'/%3E%3C/svg%3E">
+    <link id="apple-touch-icon" rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.45) translate(-256, -256)'/%3E%3C/svg%3E">
     <link rel="manifest" href="manifest.json">
 
-    <!-- Tailwind -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script> tailwind.config = { darkMode: 'class' } </script>
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        
         :root {
+            /* 淺色模式基礎設定 */
             --brand-primary: #002d72;   
             --brand-accent: #f59e0b;    
             --bg-body: #f8fafc;
@@ -27,7 +33,9 @@
             --icon-bg: #f1f5f9;
             --icon-color: #475569;
         }
+
         body.dark-mode {
+            /* 深色模式基礎設定 */
             --bg-body: #09090b;         
             --text-main: #e4e4e7;       
             --text-sub: #71717a;        
@@ -37,6 +45,7 @@
             --brand-primary: #3b82f6;   
             --brand-accent: #d97706;    
         }
+
         body {
             font-family: 'Noto Sans TC', sans-serif;
             background-color: var(--bg-body);
@@ -44,6 +53,7 @@
             transition: all 0.3s ease;
             -webkit-tap-highlight-color: transparent;
         }
+
         header {
             background-color: var(--card-bg);
             border-bottom: 1px solid rgba(0,0,0,0.1);
@@ -52,7 +62,9 @@
         body.dark-mode header {
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
+
         .hero-banner {
+            /* 淺色模式漸層 */
             background: linear-gradient(135deg, #002d72 0%, #1e3a8a 100%);
             color: white;
             position: relative;
@@ -60,15 +72,18 @@
             transition: background 0.3s ease;
         }
         body.dark-mode .hero-banner {
+            /* 深色模式漸層 */
             background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
             border: 1px solid #312e81;
         }
+
         .hero-shape {
             position: absolute;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.03);
             pointer-events: none;
         }
+
         .app-card {
             background-color: var(--card-bg);
             border: 1px solid transparent;
@@ -89,6 +104,7 @@
             background-color: var(--brand-accent);
             color: white;
         }
+
         .animate-card {
             opacity: 0;
             animation: fadeUp 0.5s ease-out forwards;
@@ -97,6 +113,7 @@
             from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
         .search-input:focus {
             outline: none;
             border-color: transparent;
@@ -109,6 +126,7 @@
             border-color: var(--brand-accent);
             box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2); 
         }
+        
         #theme-toast {
             position: fixed;
             bottom: 20px;
@@ -133,27 +151,35 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col invisible">
+<body class="min-h-screen flex flex-col">
 
+    <!-- Header & Logo -->
     <header class="sticky top-0 z-50 backdrop-blur-md bg-opacity-95">
         <div class="max-w-3xl mx-auto px-5 py-3 flex justify-between items-center">
             <div class="flex items-center gap-4">
+                <!-- Logo (內部：學士帽) -->
                 <div class="w-14 h-14 rounded-2xl bg-[#002d72] dark:bg-[#d97706] flex items-center justify-center shadow-md flex-shrink-0 relative overflow-hidden group transition-colors duration-300">
                     <div class="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     <i class="fa-solid fa-graduation-cap text-3xl text-white drop-shadow-sm transform group-hover:scale-110 transition-transform duration-300"></i>
                 </div>
+                <!-- 標題 -->
                 <div class="leading-tight flex flex-col justify-center">
                     <h1 class="font-bold text-lg sm:text-xl tracking-wide text-[var(--text-main)]">國立高雄科技大學</h1>
                     <p class="text-xs text-[var(--text-sub)] font-medium mt-0.5">學生系統整合入口</p>
                 </div>
             </div>
+            
+            <!-- Theme Toggle Button (三段式切換) -->
             <button onclick="toggleThemeMode()" class="w-10 h-10 rounded-full hover:bg-[var(--icon-bg)] flex items-center justify-center text-[var(--text-sub)] transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700 relative group">
+                <!-- 初始圖示由 JS 設定 -->
                 <i id="themeIcon" class="fa-solid fa-circle-half-stroke text-lg"></i>
             </button>
         </div>
     </header>
 
+    <!-- Main Content -->
     <main class="flex-grow max-w-3xl mx-auto w-full px-5 py-6 space-y-8">
+        <!-- Welcome Banner -->
         <div id="welcomeBanner" class="hero-banner rounded-xl p-6 shadow-md animate-card" style="animation-delay: 0.1s;">
             <div class="hero-shape w-40 h-40 -top-10 -right-10"></div>
             <div class="hero-shape w-24 h-24 bottom-2 right-12"></div>
@@ -187,38 +213,43 @@
         </div>
     </main>
 
+    <!-- Footer -->
     <footer class="border-t border-[var(--border-color)] py-8 mt-auto text-center">
         <p class="text-xs text-[var(--text-sub)] opacity-60">&copy; 2025 NKUST Student Portal | 非官方校務整合平台</p>
     </footer>
     <div id="theme-toast">已切換模式</div>
 
     <script>
+        // PWA Service Worker 註冊
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js');
             });
         }
 
-        const iconBlue = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.65) translate(-256, -256)'/%3E%3C/svg%3E";
-        const iconAmber = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23d97706'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.65) translate(-256, -256)'/%3E%3C/svg%3E";
+        // --- Icons (Solid Book) ---
+        // 縮放比例已調整為 0.45，確保 App 圖示不會被裁切
+        const iconBlue = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.45) translate(-256, -256)'/%3E%3C/svg%3E";
+        const iconAmber = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23d97706'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.45) translate(-256, -256)'/%3E%3C/svg%3E";
 
         function updateFavicon(isDark) {
             const link = document.querySelector("link[rel~='icon']");
             if(link) link.href = isDark ? iconAmber : iconBlue;
         }
 
-        // === 主題核心邏輯：變數統一為 'theme_mode' 以防衝突 ===
-        let currentMode = 'auto';
+        // === Theme Logic (Three-State: Light, Dark, Auto) ===
+        let currentMode = 'auto'; // 預設為 'auto'
 
         function initTheme() {
-            const stored = localStorage.getItem('theme_mode');
+            const stored = localStorage.getItem('theme_mode'); // 使用統一的 key
             if (stored) {
                 currentMode = stored;
             } else {
-                currentMode = 'auto';
+                currentMode = 'auto'; // 第一次進入，使用 Auto
             }
             applyTheme(currentMode);
-            document.body.classList.remove('invisible');
+            // 移除隱藏，確保內容顯示
+            document.body.classList.remove('invisible'); 
         }
 
         function applyTheme(mode) {
@@ -293,8 +324,10 @@
             const textEl = document.getElementById('greetingText');
             const iconEl = document.getElementById('greetingIcon');
             const containerEl = document.getElementById('greetingContainer');
+            
             containerEl.className = "flex items-center gap-2 mb-1";
             iconEl.className = "";
+
             if (hour >= 5 && hour < 12) {
                 textEl.textContent = "早安，同學";
                 iconEl.className = "fa-regular fa-sun";
