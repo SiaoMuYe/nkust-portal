@@ -22,8 +22,21 @@
         * { -ms-overflow-style: none !important; scrollbar-width: none !important; }
         *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; background: transparent !important; }
 
-        /* 2. 鎖定重整 */
-        html, body { overscroll-behavior-y: none; height: 100%; overflow-y: auto; }
+        /* 2. 鎖定原生重整 (但允許 JS 實作回彈) */
+        html, body { 
+            overscroll-behavior-y: none; 
+            height: 100%; 
+            overflow-y: auto; 
+        }
+
+        /* 3. iOS 回彈動畫樣式 */
+        #welcomeBanner, main, header {
+            will-change: transform;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+        .pulling { transition: none !important; }
+        .bouncing { transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
 
         :root {
             --brand-primary: #002d72;   
@@ -71,7 +84,7 @@
             pointer-events: none;
         }
 
-        /* === App Card === */
+        /* === App Card (JS 接管狀態) === */
         .app-card {
             background-color: var(--card-bg);
             border: 1px solid transparent;
@@ -79,7 +92,42 @@
             border-radius: 12px;
             outline: none !important;
             user-select: none;
+            position: relative;
+            transform: scale(1);
             transition: transform 0.1s ease;
+        }
+        
+        .app-card .card-icon,
+        .app-card h3,
+        .app-card .fa-chevron-right {
+            transition: color 0.1s, background-color 0.1s, opacity 0.1s, transform 0.1s;
+        }
+
+        .app-card .fa-chevron-right {
+            color: var(--icon-color);
+            opacity: 0.5;
+        }
+
+        /* 禁用 CSS 原生 Focus/Active 視覺 (防沾黏) */
+        .app-card:focus, 
+        .app-card:active,
+        .app-card:focus-visible {
+            background-color: var(--card-bg) !important;
+            border-color: transparent !important;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+            transform: none !important;
+        }
+        .app-card:focus .card-icon, .app-card:active .card-icon {
+            background-color: var(--icon-bg) !important;
+            color: var(--icon-color) !important;
+        }
+        .app-card:focus h3, .app-card:active h3 {
+            color: var(--text-main) !important;
+        }
+        .app-card:focus .fa-chevron-right, .app-card:active .fa-chevron-right {
+            color: var(--icon-color) !important;
+            opacity: 0.5 !important;
+            transform: none !important;
         }
 
         /* Hover (僅電腦) */
@@ -88,7 +136,6 @@
                 transform: translateY(-2px);
                 border-color: var(--brand-accent);
                 box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             }
             .app-card:hover .card-icon {
                 background-color: var(--brand-accent);
@@ -105,67 +152,46 @@
             body.dark-mode .app-card:hover h3 { color: #60a5fa; }
         }
 
-        /* Focus: 強制保持原狀 (避免返回時變色) */
-        .app-card:focus {
-            background-color: var(--card-bg) !important;
-            border-color: transparent !important;
-            transform: none !important;
-        }
-        .app-card:focus .card-icon {
-            background-color: var(--icon-bg) !important;
-            color: var(--icon-color) !important;
-        }
-        .app-card:focus h3 { color: var(--text-main) !important; }
-        .app-card:focus .fa-chevron-right { color: var(--icon-color) !important; opacity: 0.5 !important; transform: none !important; }
-
-        /* Active: 按下時變色 (JS 控制 .clicking) */
-        .app-card.clicking {
+        /* 點擊狀態 (.is-pressing) */
+        .app-card.is-pressing {
             background-color: var(--icon-bg) !important;
             transform: scale(0.98) !important;
         }
-        .app-card.clicking .card-icon {
+        .app-card.is-pressing .card-icon {
             background-color: var(--brand-accent) !important;
             color: white !important;
-            transition: none !important;
         }
-        .app-card.clicking h3 {
+        .app-card.is-pressing h3 {
             color: var(--brand-primary) !important;
-            transition: none !important;
         }
-        .app-card.clicking .fa-chevron-right {
+        .app-card.is-pressing .fa-chevron-right {
             color: var(--brand-accent) !important;
             opacity: 1 !important;
             transform: translateX(2px) !important;
-            transition: none !important;
         }
 
-        /* 深色模式 Active/Focus 修正 */
+        /* 深色模式修正 */
         body.dark-mode .app-card { border: 1px solid #27272a; box-shadow: none; }
-        body.dark-mode .app-card:focus { background-color: var(--card-bg) !important; }
-        
-        body.dark-mode .app-card.clicking h3 { color: #60a5fa !important; }
-        body.dark-mode .app-card.clicking .fa-chevron-right { color: var(--brand-accent) !important; }
-
-
-        /* === 搜尋框與按鈕 === */
-        .search-input {
-            transition: background-color 0.3s, color 0.3s;
+        body.dark-mode .app-card:focus, body.dark-mode .app-card:active {
+            background-color: var(--card-bg) !important;
         }
+        body.dark-mode .app-card.is-pressing h3 { color: #60a5fa !important; }
+        body.dark-mode .app-card.is-pressing .fa-chevron-right { color: var(--brand-accent) !important; }
+
+        /* 搜尋框與按鈕 */
         .search-input:focus, button:focus {
             outline: none;
             background-color: #ffffff;
             box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4) !important;
         }
         
-        /* 深色模式搜尋框樣式 */
         body.dark-mode .search-input {
-            background-color: #18181b !important; /* 深黑底 */
-            color: white !important;               /* 白字 */
+            background-color: #18181b !important;
+            color: white !important;
             border: 1px solid #27272a;
         }
-        body.dark-mode .search-input::placeholder {
-            color: #71717a !important;
-        }
+        body.dark-mode .search-input::placeholder { color: #71717a !important; }
+        
         body.dark-mode .search-input:focus, 
         body.dark-mode button:focus {
             background-color: #27272a !important;
@@ -230,7 +256,8 @@
                     <input type="text" id="searchInput" placeholder="快速搜尋..." 
                            class="search-input w-full pl-9 pr-8 py-2.5 rounded-lg text-sm border-0 
                                   bg-white text-[var(--text-main)] placeholder-[var(--text-main)] placeholder-opacity-70
-                                  shadow-lg shadow-black/5 transition-all opacity-100"
+                                  shadow-lg shadow-black/5 transition-all opacity-100
+                                  dark:bg-[#18181b] dark:text-white dark:placeholder-gray-500"
                            autocomplete="off">
                     <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-sub)] hover:text-red-500 p-1 z-20">
                         <i class="fa-solid fa-xmark"></i>
@@ -260,6 +287,7 @@
             window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
         }
 
+        // SVG - 完整字串，確保 JS 不會出錯
         const iconBlue = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
         const iconAmber = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23d97706'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
 
@@ -320,36 +348,187 @@
             searchInput.focus();
         }
 
-        function attachTouchHandlers() {
-            document.querySelectorAll('.app-card').forEach(card => {
-                card.addEventListener('touchstart', function() {
-                    this.classList.add('clicking');
-                }, { passive: true });
-
-                card.addEventListener('touchend', function() {
-                    this.classList.remove('clicking');
-                });
+        // ===== iOS 回彈特效 (重新加入) =====
+        let pullStartY = 0;
+        let isPulling = false;
+        let currentPull = 0;
+        let animationFrameId = null;
+        const mainElement = document.querySelector('main');
+        const headerElement = document.querySelector('header');
+        const welcomeBanner = document.getElementById('welcomeBanner');
+        const MAX_PULL = 100;
+        
+        function applyPullEffect(pullDistance) {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = requestAnimationFrame(() => {
+                const damping = 0.4;
+                const resistance = Math.pow(pullDistance / MAX_PULL, 0.7);
+                const actualPull = pullDistance * damping * (1 - resistance);
+                currentPull = Math.max(0, Math.min(actualPull, MAX_PULL));
+                const scaleY = 1 + (currentPull / 400);
+                const scaleX = 1 - (currentPull / 2000);
+                const bannerScale = 1 + (currentPull / 600);
                 
-                card.addEventListener('touchcancel', function() {
-                    this.classList.remove('clicking');
-                });
+                headerElement.style.transform = `translate3d(0, ${currentPull}px, 0) scale(${scaleX}, ${scaleY})`;
+                mainElement.style.transform = `translate3d(0, ${currentPull}px, 0)`;
+                welcomeBanner.style.transform = `translate3d(0, 0, 0) scale(${bannerScale})`;
+                welcomeBanner.style.transformOrigin = 'top center';
+                animationFrameId = null;
             });
         }
-
-        window.addEventListener('pageshow', (event) => {
+        
+        function releasePullEffect() {
+            if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+            headerElement.classList.add('bouncing');
+            mainElement.classList.add('bouncing');
+            welcomeBanner.classList.add('bouncing');
+            headerElement.style.transform = 'translate3d(0, 0, 0) scale(1, 1)';
+            mainElement.style.transform = 'translate3d(0, 0, 0)';
+            welcomeBanner.style.transform = 'translate3d(0, 0, 0) scale(1)';
             setTimeout(() => {
-                if (document.activeElement) {
-                    document.activeElement.blur();
+                headerElement.classList.remove('bouncing', 'pulling');
+                mainElement.classList.remove('bouncing', 'pulling');
+                welcomeBanner.classList.remove('bouncing', 'pulling');
+                headerElement.style.transform = '';
+                mainElement.style.transform = '';
+                welcomeBanner.style.transform = '';
+                welcomeBanner.style.transformOrigin = '';
+                currentPull = 0;
+            }, 400);
+        }
+        
+        window.addEventListener('touchstart', (e) => {
+            const scrollY = window.scrollY || window.pageYOffset;
+            if (scrollY <= 5) {
+                isPulling = true;
+                pullStartY = e.touches[0].clientY;
+                headerElement.classList.add('pulling');
+                mainElement.classList.add('pulling');
+                welcomeBanner.classList.add('pulling');
+            }
+        }, { passive: true });
+        
+        window.addEventListener('touchmove', (e) => {
+            if (!isPulling) return;
+            const scrollY = window.scrollY || window.pageYOffset;
+            if (scrollY <= 5) {
+                const currentY = e.touches[0].clientY;
+                const pullDistance = currentY - pullStartY;
+                if (pullDistance > 0) applyPullEffect(pullDistance);
+            } else if (currentPull > 0) {
+                isPulling = false;
+                releasePullEffect();
+            }
+        }, { passive: true });
+        
+        window.addEventListener('touchend', () => {
+            if (isPulling && currentPull > 0) releasePullEffect();
+            isPulling = false;
+        }, { passive: true });
+        
+        window.addEventListener('touchcancel', () => {
+            if (isPulling && currentPull > 0) releasePullEffect();
+            isPulling = false;
+        }, { passive: true });
+
+        // ===== 觸控事件處理 (解決沾黏 + 快速滑動優化) =====
+        let currentActiveCard = null;
+        let isScrolling = false;
+        let touchStartY = 0;
+        let hasMovedVertically = false;
+
+        function clearAllActiveStates() {
+            document.querySelectorAll('.app-card').forEach(card => {
+                card.classList.remove('is-pressing');
+            });
+            currentActiveCard = null;
+        }
+        
+        function setActiveCard(card) {
+            if (card !== currentActiveCard) {
+                if (currentActiveCard) {
+                    currentActiveCard.classList.remove('is-pressing');
                 }
-                const activeElements = document.querySelectorAll('.app-card');
-                activeElements.forEach(el => {
-                    el.blur(); 
-                    el.classList.remove('clicking');
-                    el.style.backgroundColor = ''; 
-                    el.style.transform = '';
+                if (card) {
+                    card.classList.add('is-pressing');
+                    currentActiveCard = card;
+                } else {
+                    currentActiveCard = null;
+                }
+            }
+        }
+
+        function getCardAtPoint(x, y) {
+            const element = document.elementFromPoint(x, y);
+            if (!element) return null;
+            return element.closest('.app-card');
+        }
+
+        function attachTouchHandlers() {
+            const container = document.getElementById('appContainer');
+            
+            container.addEventListener('touchstart', function(e) {
+                isScrolling = false;
+                hasMovedVertically = false;
+                touchStartY = e.touches[0].clientY;
+                
+                const touch = e.touches[0];
+                const card = getCardAtPoint(touch.clientX, touch.clientY);
+                if (card) setActiveCard(card);
+            }, { passive: true });
+
+            container.addEventListener('touchmove', function(e) {
+                if (isScrolling) return; // 優化：捲動時不計算
+
+                const touch = e.touches[0];
+                const moveY = Math.abs(touch.clientY - touchStartY);
+                
+                if (moveY > 10) { 
+                    hasMovedVertically = true;
+                    isScrolling = true;
+                    clearAllActiveStates();
+                    return;
+                }
+                
+                if (!hasMovedVertically) {
+                    const card = getCardAtPoint(touch.clientX, touch.clientY);
+                    if (card) setActiveCard(card);
+                    else if (!card && currentActiveCard) clearAllActiveStates();
+                }
+            }, { passive: true });
+
+            container.addEventListener('touchend', function(e) {
+                if (!isScrolling && currentActiveCard) {
+                    setTimeout(clearAllActiveStates, 100);
+                } else {
+                    clearAllActiveStates();
+                }
+                isScrolling = false;
+            }, { passive: true });
+
+            container.addEventListener('touchcancel', function() {
+                clearAllActiveStates();
+                isScrolling = false;
+            }, { passive: true });
+        }
+
+        function forceCleanup() {
+            setTimeout(() => {
+                clearAllActiveStates();
+                if (document.activeElement) document.activeElement.blur();
+                document.querySelectorAll('.app-card').forEach(el => {
+                    el.blur();
+                    el.classList.remove('is-pressing');
                 });
-            }, 10);
+            }, 50);
+        }
+        
+        window.addEventListener('pageshow', forceCleanup);
+        window.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') forceCleanup();
         });
+        window.addEventListener('blur', forceCleanup);
+        window.addEventListener('focus', forceCleanup);
 
         function renderCategories(filterText = "") {
             appContainer.innerHTML = '';
@@ -357,7 +536,9 @@
             let delayCounter = 2;
 
             categories.forEach(cat => {
-                const filteredItems = cat.items.filter(item => (item.name + item.desc).toLowerCase().includes(filterText.toLowerCase()));
+                const filteredItems = cat.items.filter(item => 
+                    (item.name + item.desc).toLowerCase().includes(filterText.toLowerCase())
+                );
 
                 if (filteredItems.length > 0) {
                     hasResults = true;
@@ -378,7 +559,7 @@
                     filteredItems.forEach(app => {
                         grid.innerHTML += `
                             <a href="${app.url}" target="_blank" rel="noopener noreferrer" 
-                               onclick="setTimeout(() => this.blur(), 100)"
+                               onclick="forceCleanup()"
                                class="app-card p-4 flex items-center gap-4 group cursor-pointer relative overflow-hidden">
                                 <div class="card-icon w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-[var(--icon-bg)] text-[var(--icon-color)] transition-all duration-300">
                                     <i class="${app.icon} text-lg"></i>
@@ -411,6 +592,7 @@
             let isDark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
             document.body.classList.toggle('dark-mode', isDark);
             document.documentElement.classList.toggle('dark', isDark);
+            
             const link = document.querySelector("link[rel~='icon']");
             if(link) link.href = isDark ? iconAmber : iconBlue;
             
@@ -423,24 +605,15 @@
         }
 
         function toggleThemeMode(btn) {
-            let nextMode = 'light';
-            let toastText = "已切換至淺色模式";
-
-            if (currentMode === 'light') {
-                nextMode = 'dark';
-                toastText = "已切換至深色模式";
-            } else if (currentMode === 'dark') {
-                nextMode = 'auto';
-                toastText = "已切換至自動跟隨模式";
-            } else {
-                nextMode = 'light';
-                toastText = "已切換至淺色模式";
-            }
-
-            currentMode = nextMode;
-            localStorage.setItem('theme_mode', nextMode);
-            applyTheme(nextMode);
-            showToast(toastText);
+            const modes = ['light', 'dark', 'auto'];
+            const texts = ['已切換至淺色模式', '已切換至深色模式', '已切換至自動跟隨模式'];
+            const currentIndex = modes.indexOf(currentMode);
+            const nextIndex = (currentIndex + 1) % 3;
+            
+            currentMode = modes[nextIndex];
+            localStorage.setItem('theme_mode', currentMode);
+            applyTheme(currentMode);
+            showToast(texts[nextIndex]);
             
             if (btn) btn.blur();
         }
@@ -462,24 +635,20 @@
             const iconEl = document.getElementById('greetingIcon');
             const containerEl = document.getElementById('greetingContainer');
             
-            // 修正處：
-            // 淺色模式 (Banner是藍色) -> 午安用黃色 (對比度高)
-            // 深色模式 (Banner是暗色) -> 午安用橘色 (原本設計)
-            
+            containerEl.className = "flex items-center gap-2 mb-1";
             if (h >= 5 && h < 12) {
                 textEl.textContent = "早安，同學";
                 iconEl.className = "fa-regular fa-sun";
-                // 早上統一用黃色
+                // 淺色模式維持高對比黃色，深色模式維持黃色
                 containerEl.className = `flex items-center gap-2 mb-1 ${isDark ? 'text-yellow-400' : 'text-yellow-300'}`;
             } else if (h >= 12 && h < 18) {
                 textEl.textContent = "午安，同學";
                 iconEl.className = "fa-solid fa-sun";
-                // 午安：淺色模式用黃色，深色模式用橘色
+                // 修正：淺色模式用黃色，深色模式用橘色
                 containerEl.className = `flex items-center gap-2 mb-1 ${isDark ? 'text-orange-400' : 'text-yellow-300'}`;
             } else {
                 textEl.textContent = "晚安，同學";
                 iconEl.className = "fa-solid fa-moon";
-                // 晚上統一用黃色 (月亮)
                 containerEl.className = `flex items-center gap-2 mb-1 ${isDark ? 'text-yellow-400' : 'text-yellow-300'}`;
             }
         }
