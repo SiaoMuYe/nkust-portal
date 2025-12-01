@@ -2,15 +2,14 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="robots" content="noindex, nofollow">
     <title>高科大 | 學生系統整合入口</title>
     
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#18181b" media="(prefers-color-scheme: dark)">
 
-    <link id="dynamic-favicon" rel="icon" type="image/png" href="icon-192.png">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E">
     <link rel="manifest" href="manifest.json">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,61 +18,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
         
-        /* 1. 隱藏滾軸 */
+        /* 1. 隱藏捲軸 */
         * { -ms-overflow-style: none !important; scrollbar-width: none !important; }
         *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; background: transparent !important; }
 
-        /* 2. 允許過度滾動以顯示回彈效果 */
-        html, body { 
-            overscroll-behavior-y: contain; 
-            height: 100%; 
-            overflow-y: auto; 
-        }
-        
-        /* Welcome Banner 也參與回彈 */
-        #welcomeBanner {
-            will-change: transform;
-            transform: translateZ(0);
-            backface-visibility: hidden;
-        }
-        
-        #welcomeBanner.pulling {
-            transition: none !important;
-        }
-        
-        #welcomeBanner.bouncing {
-            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        
-        /* 主容器回彈動畫 */
-        main {
-            will-change: transform;
-            transform: translateZ(0);
-            backface-visibility: hidden;
-        }
-        
-        main.pulling {
-            transition: none !important;
-        }
-        
-        main.bouncing {
-            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        
-        /* Header 回彈效果 */
-        header {
-            will-change: transform;
-            transform: translateZ(0);
-            backface-visibility: hidden;
-        }
-        
-        header.pulling {
-            transition: none !important;
-        }
-        
-        header.bouncing {
-            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
+        /* 2. 鎖定重整 */
+        html, body { overscroll-behavior-y: none; height: 100%; overflow-y: auto; }
 
         :root {
             --brand-primary: #002d72;   
@@ -121,7 +71,7 @@
             pointer-events: none;
         }
 
-        /* === App Card 基礎樣式 === */
+        /* === App Card === */
         .app-card {
             background-color: var(--card-bg);
             border: 1px solid transparent;
@@ -129,45 +79,16 @@
             border-radius: 12px;
             outline: none !important;
             user-select: none;
-            position: relative;
-            
-            /* 硬體加速 */
-            will-change: transform, background-color;
-            transform: translateZ(0);
-            backface-visibility: hidden;
-            -webkit-font-smoothing: antialiased;
-            
-            /* 即時過渡,無延遲 */
-            transition: transform 0.08s ease-out, 
-                        background-color 0.08s ease-out,
-                        border-color 0.08s ease-out;
-        }
-        
-        .app-card .card-icon,
-        .app-card h3,
-        .app-card .fa-chevron-right {
-            will-change: background-color, color, transform;
-            transform: translateZ(0);
-            transition: all 0.08s ease-out;
-        }
-        
-        body.dark-mode .app-card { 
-            border: 1px solid #27272a; 
-            box-shadow: none; 
+            transition: transform 0.1s ease;
         }
 
-        /* 箭頭預設樣式 */
-        .app-card .fa-chevron-right {
-            color: var(--icon-color);
-            opacity: 0.5;
-        }
-
-        /* === Hover (桌面) === */
+        /* Hover (僅電腦) */
         @media (hover: hover) {
             .app-card:hover {
-                transform: translateY(-2px) translateZ(0);
+                transform: translateY(-2px);
                 border-color: var(--brand-accent);
                 box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             }
             .app-card:hover .card-icon {
                 background-color: var(--brand-accent);
@@ -178,98 +99,80 @@
             }
             .app-card:hover .fa-chevron-right {
                 color: var(--brand-accent);
-                transform: translateX(2px) translateZ(0);
+                transform: translateX(2px);
                 opacity: 1;
             }
-            body.dark-mode .app-card:hover h3 { 
-                color: #60a5fa; 
-            }
+            body.dark-mode .app-card:hover h3 { color: #60a5fa; }
         }
 
-        /* === Active/Clicking 狀態 (手機觸控) - 即時響應 === */
-        .app-card.active {
-            transform: scale(0.98) translateZ(0) !important;
-            background-color: var(--icon-bg) !important;
-            transition: none !important; /* 完全移除過渡延遲 */
+        /* Focus: 強制保持原狀 (避免返回時變色) */
+        .app-card:focus {
+            background-color: var(--card-bg) !important;
+            border-color: transparent !important;
+            transform: none !important;
         }
-        
-        .app-card.active .card-icon {
+        .app-card:focus .card-icon {
+            background-color: var(--icon-bg) !important;
+            color: var(--icon-color) !important;
+        }
+        .app-card:focus h3 { color: var(--text-main) !important; }
+        .app-card:focus .fa-chevron-right { color: var(--icon-color) !important; opacity: 0.5 !important; transform: none !important; }
+
+        /* Active: 按下時變色 (JS 控制 .clicking) */
+        .app-card.clicking {
+            background-color: var(--icon-bg) !important;
+            transform: scale(0.98) !important;
+        }
+        .app-card.clicking .card-icon {
             background-color: var(--brand-accent) !important;
             color: white !important;
             transition: none !important;
         }
-        
-        .app-card.active h3 {
+        .app-card.clicking h3 {
             color: var(--brand-primary) !important;
             transition: none !important;
         }
-        
-        .app-card.active .fa-chevron-right {
+        .app-card.clicking .fa-chevron-right {
             color: var(--brand-accent) !important;
             opacity: 1 !important;
-            transform: translateX(2px) translateZ(0) !important;
+            transform: translateX(2px) !important;
             transition: none !important;
         }
-        
-        body.dark-mode .app-card.active h3 { 
-            color: #60a5fa !important; 
-        }
 
-        /* Focus 狀態完全禁用視覺回饋 - 強制覆蓋所有可能的樣式 */
-        .app-card:focus,
-        .app-card:focus-visible,
-        .app-card:focus-within {
-            outline: none !important;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
-            transform: none !important;
-            background-color: var(--card-bg) !important;
-            border-color: transparent !important;
-        }
+        /* 深色模式 Active/Focus 修正 */
+        body.dark-mode .app-card { border: 1px solid #27272a; box-shadow: none; }
+        body.dark-mode .app-card:focus { background-color: var(--card-bg) !important; }
         
-        .app-card:focus .card-icon,
-        .app-card:focus-visible .card-icon,
-        .app-card:focus-within .card-icon {
-            background-color: var(--icon-bg) !important;
-            color: var(--icon-color) !important;
-        }
-        
-        .app-card:focus h3,
-        .app-card:focus-visible h3,
-        .app-card:focus-within h3 {
-            color: var(--text-main) !important;
-        }
-        
-        .app-card:focus .fa-chevron-right,
-        .app-card:focus-visible .fa-chevron-right,
-        .app-card:focus-within .fa-chevron-right {
-            color: var(--icon-color) !important;
-            opacity: 0.5 !important;
-            transform: none !important;
-        }
+        body.dark-mode .app-card.clicking h3 { color: #60a5fa !important; }
+        body.dark-mode .app-card.clicking .fa-chevron-right { color: var(--brand-accent) !important; }
 
-        body.dark-mode .app-card:focus h3,
-        body.dark-mode .app-card:focus-visible h3,
-        body.dark-mode .app-card:focus-within h3 {
-            color: var(--text-main) !important;
-        }
-        
-        body.dark-mode .app-card:focus,
-        body.dark-mode .app-card:focus-visible,
-        body.dark-mode .app-card:focus-within {
-            box-shadow: none !important;
-        }
 
         /* === 搜尋框與按鈕 === */
+        .search-input {
+            transition: background-color 0.3s, color 0.3s;
+        }
         .search-input:focus, button:focus {
             outline: none;
             background-color: #ffffff;
             box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4) !important;
         }
-        body.dark-mode .search-input:focus, body.dark-mode button:focus {
-            background-color: #27272a;
+        
+        /* 深色模式搜尋框樣式 */
+        body.dark-mode .search-input {
+            background-color: #18181b !important; /* 深黑底 */
+            color: white !important;               /* 白字 */
+            border: 1px solid #27272a;
+        }
+        body.dark-mode .search-input::placeholder {
+            color: #71717a !important;
+        }
+        body.dark-mode .search-input:focus, 
+        body.dark-mode button:focus {
+            background-color: #27272a !important;
             border-color: transparent;
             box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.5) !important; 
         }
+        
         button { border-radius: 9999px; }
 
         /* Toast */
@@ -327,8 +230,7 @@
                     <input type="text" id="searchInput" placeholder="快速搜尋..." 
                            class="search-input w-full pl-9 pr-8 py-2.5 rounded-lg text-sm border-0 
                                   bg-white text-[var(--text-main)] placeholder-[var(--text-main)] placeholder-opacity-70
-                                  shadow-lg shadow-black/5 transition-all opacity-100
-                                  dark:bg-[#18181b] dark:text-white dark:placeholder-gray-500"
+                                  shadow-lg shadow-black/5 transition-all opacity-100"
                            autocomplete="off">
                     <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-sub)] hover:text-red-500 p-1 z-20">
                         <i class="fa-solid fa-xmark"></i>
@@ -358,6 +260,9 @@
             window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
         }
 
+        const iconBlue = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
+        const iconAmber = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23d97706'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
+
         const categories = [
             {
                 id: "academic", title: "教務與課程",
@@ -366,7 +271,7 @@
                     { name: "校務單一入口", url: "https://webap.nkust.edu.tw/nkust/", icon: "fa-solid fa-id-card", desc: "各類校務系統入口" },
                     { name: "數位教學平台", url: "https://elearning.nkust.edu.tw/moocs/#/home", icon: "fa-solid fa-chalkboard-user", desc: "課程教材/作業繳交" },
                     { name: "Zuvio", url: "https://irs.zuvio.com.tw/irs/login", icon: "fa-solid fa-comments", desc: "課堂互動/點名/測驗" },
-                    { name: "選課系統", url: "https://aais5.nkust.edu.tw/selcrs_std", icon: "fa-solid fa-list-check", desc: "加退選/涼課入口" }
+                    { name: "選課系統", url: "https://aais5.nkust.edu.tw/selcrs_std", icon: "fa-solid fa-list-check", desc: "加退選/搶課入口" }
                 ]
             },
             {
@@ -400,10 +305,11 @@
         searchInput.addEventListener('keyup', (e) => {
             const term = e.target.value.trim();
             renderCategories(term);
-            clearBtn.classList.toggle('hidden', !term);
+            if(term) clearBtn.classList.remove('hidden');
+            else clearBtn.classList.add('hidden');
         });
 
-        window.addEventListener('popstate', () => {
+        window.addEventListener('popstate', (event) => {
             if (window.location.hash !== "#search") searchInput.blur();
         });
 
@@ -414,338 +320,36 @@
             searchInput.focus();
         }
 
-        // ===== iOS 風格回彈效果 (完整版) =====
-        let pullStartY = 0;
-        let isPulling = false;
-        let currentPull = 0;
-        let animationFrameId = null;
-        const mainElement = document.querySelector('main');
-        const headerElement = document.querySelector('header');
-        const welcomeBanner = document.getElementById('welcomeBanner');
-        const MAX_PULL = 100;
-        
-        function applyPullEffect(pullDistance) {
-            // 取消之前的動畫幀
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-            
-            animationFrameId = requestAnimationFrame(() => {
-                // 使用指數阻尼,更自然的拉伸感
-                const damping = 0.4;
-                const resistance = Math.pow(pullDistance / MAX_PULL, 0.7);
-                const actualPull = pullDistance * damping * (1 - resistance);
-                currentPull = Math.max(0, Math.min(actualPull, MAX_PULL));
-                
-                // 拉伸時 Header 輕微放大
-                const scaleY = 1 + (currentPull / 400);
-                const scaleX = 1 - (currentPull / 2000);
-                
-                // Welcome Banner 也跟隨拉伸
-                const bannerScale = 1 + (currentPull / 600);
-                
-                // 使用 transform 而非 top/margin (硬體加速)
-                headerElement.style.transform = `translate3d(0, ${currentPull}px, 0) scale(${scaleX}, ${scaleY})`;
-                mainElement.style.transform = `translate3d(0, ${currentPull}px, 0)`;
-                welcomeBanner.style.transform = `translate3d(0, 0, 0) scale(${bannerScale})`;
-                welcomeBanner.style.transformOrigin = 'top center';
-                
-                animationFrameId = null;
-            });
-        }
-        
-        function releasePullEffect() {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
-            
-            headerElement.classList.add('bouncing');
-            mainElement.classList.add('bouncing');
-            welcomeBanner.classList.add('bouncing');
-            
-            // 重置變形
-            headerElement.style.transform = 'translate3d(0, 0, 0) scale(1, 1)';
-            mainElement.style.transform = 'translate3d(0, 0, 0)';
-            welcomeBanner.style.transform = 'translate3d(0, 0, 0) scale(1)';
-            
-            setTimeout(() => {
-                headerElement.classList.remove('bouncing', 'pulling');
-                mainElement.classList.remove('bouncing', 'pulling');
-                welcomeBanner.classList.remove('bouncing', 'pulling');
-                headerElement.style.transform = '';
-                mainElement.style.transform = '';
-                welcomeBanner.style.transform = '';
-                welcomeBanner.style.transformOrigin = '';
-                currentPull = 0;
-            }, 400);
-        }
-        
-        // 全域觸控事件
-        window.addEventListener('touchstart', (e) => {
-            const scrollY = window.scrollY || window.pageYOffset;
-            
-            if (scrollY <= 5) {
-                isPulling = true;
-                pullStartY = e.touches[0].clientY;
-                headerElement.classList.add('pulling');
-                mainElement.classList.add('pulling');
-                welcomeBanner.classList.add('pulling');
-            }
-        }, { passive: true });
-        
-        window.addEventListener('touchmove', (e) => {
-            if (!isPulling) return;
-            
-            const scrollY = window.scrollY || window.pageYOffset;
-            
-            if (scrollY <= 5) {
-                const currentY = e.touches[0].clientY;
-                const pullDistance = currentY - pullStartY;
-                
-                if (pullDistance > 0) {
-                    applyPullEffect(pullDistance);
-                }
-            } else {
-                if (currentPull > 0) {
-                    isPulling = false;
-                    releasePullEffect();
-                }
-            }
-        }, { passive: true });
-        
-        window.addEventListener('touchend', () => {
-            if (isPulling && currentPull > 0) {
-                isPulling = false;
-                releasePullEffect();
-            }
-            isPulling = false;
-        }, { passive: true });
-        
-        window.addEventListener('touchcancel', () => {
-            if (isPulling && currentPull > 0) {
-                releasePullEffect();
-            }
-            isPulling = false;
-        }, { passive: true });
-
-        // ===== 觸控事件處理 (超靈敏版) =====
-        let currentActiveCard = null; // 追蹤當前啟動的卡片
-        let isScrolling = false; // 追蹤是否正在滾動頁面
-        let touchStartY = 0;
-        let hasMovedVertically = false;
-
-        function clearAllActiveStates() {
-            // 即時清除,不使用動畫
-            document.querySelectorAll('.app-card').forEach(card => {
-                card.classList.remove('active');
-            });
-            currentActiveCard = null;
-        }
-        
-        function setActiveCard(card) {
-            // 直接處理,不使用 requestAnimationFrame
-            if (card !== currentActiveCard) {
-                // 先移除舊的
-                if (currentActiveCard) {
-                    currentActiveCard.classList.remove('active');
-                }
-                // 立即啟動新的
-                if (card) {
-                    card.classList.add('active');
-                    currentActiveCard = card;
-                } else {
-                    currentActiveCard = null;
-                }
-            }
-        }
-
-        // 根據觸控點獲取當前元素
-        function getCardAtPoint(x, y) {
-            const element = document.elementFromPoint(x, y);
-            if (!element) return null;
-            
-            // 向上尋找最近的 .app-card
-            return element.closest('.app-card');
-        }
-
         function attachTouchHandlers() {
-            // 在容器層級處理觸控事件，實現滑動追蹤
-            const container = document.getElementById('appContainer');
-            
-            container.addEventListener('touchstart', function(e) {
-                isScrolling = false;
-                hasMovedVertically = false;
-                touchStartY = e.touches[0].clientY;
-                
-                const touch = e.touches[0];
-                const card = getCardAtPoint(touch.clientX, touch.clientY);
-                
-                if (card) {
-                    setActiveCard(card);
-                }
-            }, { passive: true });
-
-            container.addEventListener('touchmove', function(e) {
-                const touch = e.touches[0];
-                const moveY = Math.abs(touch.clientY - touchStartY);
-                
-                // 如果垂直移動超過 15px，視為滾動頁面
-                if (moveY > 15) {
-                    hasMovedVertically = true;
-                    isScrolling = true;
-                    clearAllActiveStates();
-                    return;
-                }
-                
-                // 如果不是滾動，就是在按鈕間滑動
-                if (!hasMovedVertically) {
-                    const card = getCardAtPoint(touch.clientX, touch.clientY);
-                    
-                    if (card) {
-                        // 滑到按鈕上（無論是新的還是同一個）
-                        setActiveCard(card);
-                    } else if (!card && currentActiveCard) {
-                        // 滑出所有按鈕範圍
-                        clearAllActiveStates();
-                    }
-                }
-            }, { passive: true });
-
-            container.addEventListener('touchend', function(e) {
-                // 只有在沒有滾動的情況下才保持短暫的 active 效果
-                if (!isScrolling && currentActiveCard) {
-                    setTimeout(() => {
-                        clearAllActiveStates();
-                    }, 100);
-                } else {
-                    clearAllActiveStates();
-                }
-                
-                isScrolling = false;
-                hasMovedVertically = false;
-            }, { passive: true });
-
-            container.addEventListener('touchcancel', function() {
-                clearAllActiveStates();
-                isScrolling = false;
-                hasMovedVertically = false;
-            }, { passive: true });
-
-            // 為每個卡片添加 focus 防護
-            // 全域攔截所有 focus 事件
-            document.addEventListener('focusin', function(e) {
-                if (e.target.classList.contains('app-card')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.target.blur();
-                    
-                    // 強制移除可能的 active 狀態
-                    e.target.classList.remove('active');
-                    
-                    // 讓 body 獲得焦點
-                    document.body.focus();
-                    setTimeout(() => document.body.blur(), 0);
-                }
-            }, true); // 使用捕獲階段
-            
-            // 個別卡片也加上防護
             document.querySelectorAll('.app-card').forEach(card => {
-                card.addEventListener('focus', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.blur();
-                    this.classList.remove('active');
+                card.addEventListener('touchstart', function() {
+                    this.classList.add('clicking');
+                }, { passive: true });
+
+                card.addEventListener('touchend', function() {
+                    this.classList.remove('clicking');
                 });
                 
-                // 移除 tabindex 避免可聚焦
-                card.removeAttribute('tabindex');
-                card.setAttribute('tabindex', '-1');
+                card.addEventListener('touchcancel', function() {
+                    this.classList.remove('clicking');
+                });
             });
         }
 
-        // 頁面恢復時清除所有 active 狀態 (終極版)
-        function forceCleanup() {
-            // 延遲執行,確保在瀏覽器恢復狀態之後
+        window.addEventListener('pageshow', (event) => {
             setTimeout(() => {
-                // 方法1: 清除函數
-                clearAllActiveStates();
-                
-                // 方法2: 暴力清除所有可能的狀態
-                const allCards = document.querySelectorAll('.app-card');
-                allCards.forEach(el => {
-                    // 移除所有可能的 class
-                    el.classList.remove('active');
-                    
-                    // 強制 blur 多次
-                    el.blur();
-                    setTimeout(() => el.blur(), 10);
-                    setTimeout(() => el.blur(), 50);
-                    
-                    // 清除所有 inline styles
-                    el.style.cssText = '';
-                    
-                    // 強制移除 tabindex
-                    el.removeAttribute('tabindex');
-                });
-                
-                // 方法3: 清除 document.activeElement
                 if (document.activeElement) {
                     document.activeElement.blur();
-                    setTimeout(() => {
-                        if (document.activeElement && document.activeElement.classList?.contains('app-card')) {
-                            document.activeElement.blur();
-                        }
-                    }, 100);
                 }
-                
-                // 方法4: 強制讓 body 獲得焦點
-                document.body.focus();
-                setTimeout(() => document.body.blur(), 10);
-                
-                // 方法5: 重置所有狀態變數
-                currentActiveCard = null;
-                lastProcessedCard = null;
-                isScrolling = false;
-                hasMovedVertically = false;
-            }, 0);
-            
-            // 再延遲一次,雙重保險
-            setTimeout(() => {
-                document.querySelectorAll('.app-card.active').forEach(card => {
-                    card.classList.remove('active');
-                    card.blur();
+                const activeElements = document.querySelectorAll('.app-card');
+                activeElements.forEach(el => {
+                    el.blur(); 
+                    el.classList.remove('clicking');
+                    el.style.backgroundColor = ''; 
+                    el.style.transform = '';
                 });
-                
-                if (document.activeElement?.classList?.contains('app-card')) {
-                    document.activeElement.blur();
-                }
-            }, 100);
-        }
-        
-        window.addEventListener('pageshow', (event) => {
-            forceCleanup();
+            }, 10);
         });
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                forceCleanup();
-            }
-        });
-
-        window.addEventListener('blur', () => {
-            forceCleanup();
-        });
-        
-        window.addEventListener('focus', () => {
-            forceCleanup();
-        });
-
-        window.addEventListener('scroll', () => {
-            if (currentActiveCard && !isScrolling) {
-                clearAllActiveStates();
-            }
-        }, { passive: true });
 
         function renderCategories(filterText = "") {
             appContainer.innerHTML = '';
@@ -753,9 +357,7 @@
             let delayCounter = 2;
 
             categories.forEach(cat => {
-                const filteredItems = cat.items.filter(item => 
-                    (item.name + item.desc).toLowerCase().includes(filterText.toLowerCase())
-                );
+                const filteredItems = cat.items.filter(item => (item.name + item.desc).toLowerCase().includes(filterText.toLowerCase()));
 
                 if (filteredItems.length > 0) {
                     hasResults = true;
@@ -775,7 +377,8 @@
                     grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-4";
                     filteredItems.forEach(app => {
                         grid.innerHTML += `
-                            <a href="${app.url}" target="_blank" rel="noopener noreferrer"
+                            <a href="${app.url}" target="_blank" rel="noopener noreferrer" 
+                               onclick="setTimeout(() => this.blur(), 100)"
                                class="app-card p-4 flex items-center gap-4 group cursor-pointer relative overflow-hidden">
                                 <div class="card-icon w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-[var(--icon-bg)] text-[var(--icon-color)] transition-all duration-300">
                                     <i class="${app.icon} text-lg"></i>
@@ -795,9 +398,9 @@
                 }
             });
 
-            noResults.classList.toggle('hidden', hasResults);
+            if (!hasResults) noResults.classList.remove('hidden');
+            else noResults.classList.add('hidden');
             
-            // 重新附加觸控事件
             attachTouchHandlers();
         }
 
@@ -808,6 +411,8 @@
             let isDark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
             document.body.classList.toggle('dark-mode', isDark);
             document.documentElement.classList.toggle('dark', isDark);
+            const link = document.querySelector("link[rel~='icon']");
+            if(link) link.href = isDark ? iconAmber : iconBlue;
             
             const icon = document.getElementById('themeIcon');
             if (mode === 'light') icon.className = 'fa-solid fa-sun text-lg';
@@ -818,15 +423,24 @@
         }
 
         function toggleThemeMode(btn) {
-            const modes = ['light', 'dark', 'auto'];
-            const texts = ['已切換至淺色模式', '已切換至深色模式', '已切換至自動跟隨模式'];
-            const currentIndex = modes.indexOf(currentMode);
-            const nextIndex = (currentIndex + 1) % 3;
-            
-            currentMode = modes[nextIndex];
-            localStorage.setItem('theme_mode', currentMode);
-            applyTheme(currentMode);
-            showToast(texts[nextIndex]);
+            let nextMode = 'light';
+            let toastText = "已切換至淺色模式";
+
+            if (currentMode === 'light') {
+                nextMode = 'dark';
+                toastText = "已切換至深色模式";
+            } else if (currentMode === 'dark') {
+                nextMode = 'auto';
+                toastText = "已切換至自動跟隨模式";
+            } else {
+                nextMode = 'light';
+                toastText = "已切換至淺色模式";
+            }
+
+            currentMode = nextMode;
+            localStorage.setItem('theme_mode', nextMode);
+            applyTheme(nextMode);
+            showToast(toastText);
             
             if (btn) btn.blur();
         }
@@ -848,19 +462,25 @@
             const iconEl = document.getElementById('greetingIcon');
             const containerEl = document.getElementById('greetingContainer');
             
-            containerEl.className = "flex items-center gap-2 mb-1";
+            // 修正處：
+            // 淺色模式 (Banner是藍色) -> 午安用黃色 (對比度高)
+            // 深色模式 (Banner是暗色) -> 午安用橘色 (原本設計)
+            
             if (h >= 5 && h < 12) {
-                textEl.textContent = "早安,同學";
+                textEl.textContent = "早安，同學";
                 iconEl.className = "fa-regular fa-sun";
-                containerEl.classList.add(isDark ? 'text-yellow-400' : 'text-yellow-400/90');
+                // 早上統一用黃色
+                containerEl.className = `flex items-center gap-2 mb-1 ${isDark ? 'text-yellow-400' : 'text-yellow-300'}`;
             } else if (h >= 12 && h < 18) {
-                textEl.textContent = "午安,同學";
+                textEl.textContent = "午安，同學";
                 iconEl.className = "fa-solid fa-sun";
-                containerEl.classList.add(isDark ? 'text-orange-400' : 'text-orange-400');
+                // 午安：淺色模式用黃色，深色模式用橘色
+                containerEl.className = `flex items-center gap-2 mb-1 ${isDark ? 'text-orange-400' : 'text-yellow-300'}`;
             } else {
-                textEl.textContent = "晚安,同學";
+                textEl.textContent = "晚安，同學";
                 iconEl.className = "fa-solid fa-moon";
-                containerEl.classList.add(isDark ? 'text-yellow-400' : 'text-yellow-300');
+                // 晚上統一用黃色 (月亮)
+                containerEl.className = `flex items-center gap-2 mb-1 ${isDark ? 'text-yellow-400' : 'text-yellow-300'}`;
             }
         }
 
