@@ -18,7 +18,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
         
-        /* === 全域設置：隱藏捲軸與鎖定重整 === */
+        /* === 全域設置 === */
         * {
             -ms-overflow-style: none !important;
             scrollbar-width: none !important;
@@ -30,7 +30,7 @@
             background: transparent !important;
         }
         html, body {
-            overscroll-behavior-y: none; /* 禁止下拉重整 */
+            overscroll-behavior-y: none;
             height: 100%;
             overflow-y: auto;
         }
@@ -82,7 +82,7 @@
             pointer-events: none;
         }
 
-        /* === App Card === */
+        /* === App Card (關鍵修正) === */
         .app-card {
             background-color: var(--card-bg);
             border: 1px solid transparent;
@@ -93,7 +93,7 @@
             user-select: none; 
         }
 
-        /* Hover (僅電腦) */
+        /* 1. Hover (僅電腦) */
         @media (hover: hover) {
             .app-card:hover {
                 transform: translateY(-2px);
@@ -106,41 +106,47 @@
             }
         }
 
-        /* Focus (返回時) - 強制恢復原狀 */
-        .app-card:focus {
-            background-color: var(--card-bg); 
-            border-color: transparent;
+        /* 2. Focus (返回時) - 強制重置為背景色 */
+        /* 使用 :not(:active) 確保手指按著的時候不會被重置 */
+        .app-card:focus:not(:active) {
+            background-color: var(--card-bg) !important;
+            border-color: transparent !important;
+            transform: none !important;
         }
-        body.dark-mode .app-card:focus {
-            background-color: var(--card-bg);
+        .app-card:focus:not(:active) .card-icon {
+            background-color: var(--icon-bg) !important;
+            color: var(--icon-color) !important;
+        }
+        .app-card:focus:not(:active) h3 {
+            color: var(--text-main) !important;
         }
 
-        /* Active (按壓時) - 提高權重，確保一定顯示灰色 */
+        /* 3. Active (按壓時) - 強制變色 */
         .app-card:active {
             background-color: var(--icon-bg) !important;
-            transform: scale(0.98);
+            transform: scale(0.98) !important;
         }
 
+        /* 深色模式修正 */
         body.dark-mode .app-card {
             border: 1px solid #27272a;
             box-shadow: none;
         }
+        body.dark-mode .app-card:focus:not(:active) {
+            background-color: var(--card-bg) !important;
+        }
 
-        /* === 搜尋框樣式修正 (最終版) === */
+        /* === 搜尋框樣式 === */
         .search-input:focus {
             outline: none;
             background-color: #ffffff;
-            /* 淺色模式：40% 透明度白色 */
             box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4) !important;
         }
-        
         body.dark-mode .search-input:focus {
             background-color: #27272a;
             border-color: transparent;
-            /* 深色模式：25% 透明度白色
-               這會產生一個非常低調、有質感、不鮮豔的灰色光環，
-               跟淺色模式的樣式一致，但完美融入深色背景 */
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25) !important; 
+            /* 深色模式：實線冷灰藍色光暈，不暈開 */
+            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.5) !important; 
         }
 
         /* Toast */
@@ -318,6 +324,7 @@
             searchInput.focus();
         }
 
+        // 強制移除連結焦點
         window.addEventListener('pageshow', (event) => {
             const activeElements = document.querySelectorAll('.app-card');
             activeElements.forEach(el => {
@@ -353,7 +360,7 @@
                     const grid = document.createElement('div');
                     grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-4";
                     filteredItems.forEach(app => {
-                        // 加入 noopener noreferrer 增加安全性與穩定性
+                        // 加入 noopener noreferrer
                         grid.innerHTML += `
                             <a href="${app.url}" target="_blank" rel="noopener noreferrer"
                                class="app-card p-4 flex items-center gap-4 group cursor-pointer relative overflow-hidden">
