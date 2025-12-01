@@ -17,6 +17,26 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        
+        /* === 1. 核彈級隱藏捲軸 (Hide Scrollbar Globally) === */
+        * {
+            -ms-overflow-style: none !important;  /* IE and Edge */
+            scrollbar-width: none !important;  /* Firefox */
+        }
+        *::-webkit-scrollbar {
+            display: none !important; /* Chrome, Safari, Opera */
+            width: 0 !important;
+            height: 0 !important;
+            background: transparent !important;
+        }
+
+        /* === 2. 強制鎖定下拉重整 (Disable Pull-to-Refresh) === */
+        html, body {
+            overscroll-behavior-y: none; /* 關鍵：禁止頂部溢出行為 */
+            height: 100%; /* 確保高度填滿，讓 overscroll 生效 */
+            overflow-y: auto; /* 允許滑動，但不允許重整 */
+        }
+
         :root {
             --brand-primary: #002d72;   
             --brand-accent: #f59e0b;    
@@ -43,19 +63,9 @@
             color: var(--text-main);
             transition: background-color 0.3s ease, color 0.3s ease;
             -webkit-tap-highlight-color: transparent;
-            /* 隱藏捲軸 */
-            scrollbar-width: none; 
-            -ms-overflow-style: none;
-            
-            /* === 關鍵修正：鎖定下拉重整 === 
-               這會禁止瀏覽器的 "Pull-to-Refresh" 行為，解決雙讀條問題 */
-            overscroll-behavior-y: contain; 
-        }
-
-        ::-webkit-scrollbar {
-            display: none;
         }
         
+        /* Banner */
         .hero-banner {
             background: linear-gradient(135deg, #002d72 0%, #1e3a8a 100%);
             color: white;
@@ -308,7 +318,6 @@
             searchInput.focus();
         }
 
-        // 當頁面恢復顯示時，移除連結焦點
         window.addEventListener('pageshow', (event) => {
             const activeElements = document.querySelectorAll('.app-card');
             activeElements.forEach(el => {
