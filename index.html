@@ -71,9 +71,7 @@
             pointer-events: none;
         }
 
-        /* === App Card 樣式邏輯 (重新設計) === */
-        
-        /* 1. 常態 (Normal State) - 這是您要的預設樣子 */
+        /* === App Card === */
         .app-card {
             background-color: var(--card-bg);
             border: 1px solid transparent;
@@ -83,58 +81,14 @@
             user-select: none;
             transition: transform 0.1s ease;
         }
-        .app-card .card-icon {
-            background-color: var(--icon-bg); /* 淺灰白 */
-            color: var(--icon-color);         /* 深灰 */
-            transition: background-color 0.2s, color 0.2s;
-        }
-        .app-card h3 {
-            color: var(--text-main);          /* 近似黑 */
-            transition: color 0.2s;
+        /* 常態下箭頭的顏色 */
+        .app-card .fa-chevron-right {
+            color: var(--icon-color); /* 預設深灰 */
+            opacity: 0.5;
+            transition: color 0.2s, transform 0.2s;
         }
 
-        /* 2. 瀏覽器聚焦 (Focus) - 強制覆寫為常態 */
-        /* 這是解決「返回沾黏」的關鍵：就算瀏覽器覺得它 Focus 了，我們也強制它顯示為常態 */
-        .app-card:focus {
-            background-color: var(--card-bg) !important;
-            border-color: transparent !important;
-        }
-        .app-card:focus .card-icon {
-            background-color: var(--icon-bg) !important;
-            color: var(--icon-color) !important;
-        }
-        .app-card:focus h3 {
-            color: var(--text-main) !important;
-        }
-
-        /* 3. 點擊狀態 (Clicking State) - 這是您要的變色效果 */
-        /* 這個 class 只會在手指按下去時由 JS 加入，所以返回時絕對不會有 */
-        .app-card.clicking {
-            transform: scale(0.98);
-            border-color: var(--brand-accent) !important;
-        }
-        /* 變色邏輯：淺色模式 */
-        .app-card.clicking .card-icon {
-            background-color: var(--brand-accent) !important; /* 變亮色 */
-            color: white !important;                          /* 變白字 */
-        }
-        .app-card.clicking h3 {
-            color: var(--brand-primary) !important;           /* 變品牌色 */
-        }
-        
-        /* 變色邏輯：深色模式 */
-        body.dark-mode .app-card.clicking {
-            border-color: var(--brand-accent) !important;
-        }
-        body.dark-mode .app-card.clicking .card-icon {
-            background-color: var(--brand-accent) !important;
-            color: white !important;
-        }
-        body.dark-mode .app-card.clicking h3 {
-            color: #60a5fa !important; /* 淺藍色 */
-        }
-
-        /* 4. Hover (僅限電腦) */
+        /* Hover (電腦) */
         @media (hover: hover) {
             .app-card:hover {
                 transform: translateY(-2px);
@@ -148,18 +102,57 @@
             .app-card:hover h3 {
                 color: var(--brand-primary);
             }
-            body.dark-mode .app-card:hover h3 {
-                color: #60a5fa;
+            .app-card:hover .fa-chevron-right {
+                color: var(--brand-accent);
+                transform: translateX(2px);
+                opacity: 1;
             }
+            body.dark-mode .app-card:hover h3 { color: #60a5fa; }
         }
 
-        /* 深色模式基礎修正 */
-        body.dark-mode .app-card {
-            border: 1px solid #27272a;
-            box-shadow: none;
+        /* Focus: 強制保持原狀 (防沾黏) */
+        .app-card:focus {
+            background-color: var(--card-bg) !important;
+            border-color: transparent !important;
+        }
+        .app-card:focus .card-icon {
+            background-color: var(--icon-bg) !important;
+            color: var(--icon-color) !important;
+        }
+        .app-card:focus h3 { color: var(--text-main) !important; }
+        .app-card:focus .fa-chevron-right { color: var(--icon-color) !important; opacity: 0.5 !important; }
+
+        /* === 點擊狀態 (Clicking State - JS 控制) === */
+        .app-card.clicking {
+            transform: scale(0.98);
+            background-color: var(--icon-bg) !important; /* 卡片變灰 */
+        }
+        .app-card.clicking .card-icon {
+            background-color: var(--brand-accent) !important; /* 圖標底變橘 */
+            color: white !important;                          /* 圖標變白 */
+            transition: none;
+        }
+        .app-card.clicking h3 {
+            color: var(--brand-primary) !important;           /* 標題變藍 */
+            transition: none;
+        }
+        /* 新增：箭頭變色規則 */
+        .app-card.clicking .fa-chevron-right {
+            color: var(--brand-accent) !important;            /* 箭頭變橘 */
+            opacity: 1 !important;
+            transform: translateX(2px);                       /* 稍微右移 */
+            transition: none;
         }
 
-        /* === 搜尋框樣式 (實線光暈) === */
+        /* 深色模式 Active */
+        body.dark-mode .app-card { border: 1px solid #27272a; box-shadow: none; }
+        body.dark-mode .app-card:focus { background-color: var(--card-bg) !important; }
+        
+        body.dark-mode .app-card.clicking h3 { color: #60a5fa !important; }
+        body.dark-mode .app-card.clicking .fa-chevron-right { color: var(--brand-accent) !important; }
+
+
+        /* === 搜尋框與按鈕 === */
         .search-input:focus, button:focus {
             outline: none;
             background-color: #ffffff;
@@ -168,7 +161,7 @@
         body.dark-mode .search-input:focus, body.dark-mode button:focus {
             background-color: #27272a;
             border-color: transparent;
-            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.25) !important; 
+            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.5) !important; 
         }
         button { border-radius: 9999px; }
 
@@ -318,30 +311,24 @@
             searchInput.focus();
         }
 
-        // === 關鍵 JS：處理點擊狀態 ===
-        // 使用 classList.add/remove 來代替 CSS :active
-        // 這樣我們可以完全控制何時變色、何時取消
+        // JS 接管觸控狀態
         function attachTouchHandlers() {
-            const cards = document.querySelectorAll('.app-card');
-            cards.forEach(card => {
-                // 手指摸下去：變色
+            document.querySelectorAll('.app-card').forEach(card => {
                 card.addEventListener('touchstart', function() {
                     this.classList.add('clicking');
                 }, { passive: true });
 
-                // 手指離開：取消變色
                 card.addEventListener('touchend', function() {
                     this.classList.remove('clicking');
                 });
                 
-                // 滑動取消：取消變色
                 card.addEventListener('touchcancel', function() {
                     this.classList.remove('clicking');
                 });
             });
         }
 
-        // 頁面恢復顯示時 (從上一頁回來)，強制清除所有 clicking class
+        // 頁面恢復時，強制清除
         window.addEventListener('pageshow', (event) => {
             document.querySelectorAll('.app-card').forEach(el => {
                 el.classList.remove('clicking');
@@ -399,7 +386,6 @@
             if (!hasResults) noResults.classList.remove('hidden');
             else noResults.classList.add('hidden');
             
-            // 渲染完後綁定事件
             attachTouchHandlers();
         }
 
