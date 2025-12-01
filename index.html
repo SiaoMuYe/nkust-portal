@@ -30,6 +30,21 @@
             overflow-y: auto; 
         }
         
+        /* Welcome Banner 也參與回彈 */
+        #welcomeBanner {
+            will-change: transform;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+        
+        #welcomeBanner.pulling {
+            transition: none !important;
+        }
+        
+        #welcomeBanner.bouncing {
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
         /* 主容器回彈動畫 */
         main {
             will-change: transform;
@@ -383,13 +398,14 @@
             searchInput.focus();
         }
 
-        // ===== iOS 風格回彈效果 (優化版) =====
+        // ===== iOS 風格回彈效果 (完整版) =====
         let pullStartY = 0;
         let isPulling = false;
         let currentPull = 0;
         let animationFrameId = null;
         const mainElement = document.querySelector('main');
         const headerElement = document.querySelector('header');
+        const welcomeBanner = document.getElementById('welcomeBanner');
         const MAX_PULL = 100;
         
         function applyPullEffect(pullDistance) {
@@ -407,11 +423,16 @@
                 
                 // 拉伸時 Header 輕微放大
                 const scaleY = 1 + (currentPull / 400);
-                const scaleX = 1 - (currentPull / 2000); // 輕微橫向收縮
+                const scaleX = 1 - (currentPull / 2000);
+                
+                // Welcome Banner 也跟隨拉伸
+                const bannerScale = 1 + (currentPull / 600);
                 
                 // 使用 transform 而非 top/margin (硬體加速)
                 headerElement.style.transform = `translate3d(0, ${currentPull}px, 0) scale(${scaleX}, ${scaleY})`;
                 mainElement.style.transform = `translate3d(0, ${currentPull}px, 0)`;
+                welcomeBanner.style.transform = `translate3d(0, 0, 0) scale(${bannerScale})`;
+                welcomeBanner.style.transformOrigin = 'top center';
                 
                 animationFrameId = null;
             });
@@ -425,16 +446,21 @@
             
             headerElement.classList.add('bouncing');
             mainElement.classList.add('bouncing');
+            welcomeBanner.classList.add('bouncing');
             
             // 重置變形
             headerElement.style.transform = 'translate3d(0, 0, 0) scale(1, 1)';
             mainElement.style.transform = 'translate3d(0, 0, 0)';
+            welcomeBanner.style.transform = 'translate3d(0, 0, 0) scale(1)';
             
             setTimeout(() => {
                 headerElement.classList.remove('bouncing', 'pulling');
                 mainElement.classList.remove('bouncing', 'pulling');
+                welcomeBanner.classList.remove('bouncing', 'pulling');
                 headerElement.style.transform = '';
                 mainElement.style.transform = '';
+                welcomeBanner.style.transform = '';
+                welcomeBanner.style.transformOrigin = '';
                 currentPull = 0;
             }, 400);
         }
@@ -443,11 +469,12 @@
         window.addEventListener('touchstart', (e) => {
             const scrollY = window.scrollY || window.pageYOffset;
             
-            if (scrollY <= 5) { // 容差 5px
+            if (scrollY <= 5) {
                 isPulling = true;
                 pullStartY = e.touches[0].clientY;
                 headerElement.classList.add('pulling');
                 mainElement.classList.add('pulling');
+                welcomeBanner.classList.add('pulling');
             }
         }, { passive: true });
         
@@ -464,7 +491,6 @@
                     applyPullEffect(pullDistance);
                 }
             } else {
-                // 開始滾動了,取消拉伸
                 if (currentPull > 0) {
                     isPulling = false;
                     releasePullEffect();
@@ -487,7 +513,7 @@
             isPulling = false;
         }, { passive: true });
 
-        // ===== 觸控事件處理 (極致優化版) =====
+        // ===== 觸控事件處理 (超靈敏版) =====
         let currentActiveCard = null; // 追蹤當前啟動的卡片
         let isScrolling = false; // 追蹤是否正在滾動頁面
         let touchStartY = 0;
@@ -599,52 +625,52 @@
             });
         }
 
-        // 頁面恢復時清除所有 active 狀態
-        window.addEventListener('pageshow', (event) => {
-            // 立即清除所有狀態
+        // 頁面恢復時清除所有 active 狀態 (強化版)
+        function forceCleanup() {
+            // 方法1: 清除函數
             clearAllActiveStates();
             
-            // 強制移除所有可能殘留的 active class
-            document.querySelectorAll('.app-card').forEach(el => {
+            // 方法2: 暴力清除所有 active class
+            const allCards = document.querySelectorAll('.app-card');
+            allCards.forEach(el => {
                 el.classList.remove('active');
                 el.blur();
+                // 強制重置 inline style
+                el.style.transform = '';
+                el.style.backgroundColor = '';
             });
             
-            // 清除 focus
+            // 方法3: 清除 activeElement
             if (document.activeElement && document.activeElement.classList.contains('app-card')) {
                 document.activeElement.blur();
             }
             
-            // 重置變數
+            // 方法4: 重置所有狀態變數
             currentActiveCard = null;
             lastProcessedCard = null;
             isScrolling = false;
             hasMovedVertically = false;
+        }
+        
+        window.addEventListener('pageshow', (event) => {
+            forceCleanup();
         });
 
-        // 當用戶返回頁面時清除狀態
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
-                clearAllActiveStates();
-                
-                // 額外保險:強制清除所有 active
-                document.querySelectorAll('.app-card.active').forEach(card => {
-                    card.classList.remove('active');
-                });
-                
-                currentActiveCard = null;
-                lastProcessedCard = null;
+                forceCleanup();
             }
         });
 
-        // 頁面失去焦點時也清除（例如切換到其他應用）
         window.addEventListener('blur', () => {
-            clearAllActiveStates();
-            currentActiveCard = null;
-            lastProcessedCard = null;
+            forceCleanup();
+        });
+        
+        window.addEventListener('focus', () => {
+            // 視窗重新獲得焦點時也清理
+            forceCleanup();
         });
 
-        // 監聽頁面滾動，滾動時清除 active 狀態
         window.addEventListener('scroll', () => {
             if (currentActiveCard && !isScrolling) {
                 clearAllActiveStates();
