@@ -18,7 +18,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
         
-        /* === 全域設置 === */
+        /* === 1. 隱藏捲軸 === */
         * {
             -ms-overflow-style: none !important;
             scrollbar-width: none !important;
@@ -29,6 +29,8 @@
             height: 0 !important;
             background: transparent !important;
         }
+
+        /* === 2. 鎖定重整 === */
         html, body {
             overscroll-behavior-y: none;
             height: 100%;
@@ -82,23 +84,25 @@
             pointer-events: none;
         }
 
-        /* === App Card (關鍵修正) === */
+        /* === App Card (核彈級修正) === */
         .app-card {
             background-color: var(--card-bg);
             border: 1px solid transparent;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
             border-radius: 12px;
-            transition: transform 0.1s ease, background-color 0.1s ease;
+            /* 移除 transition 避免顏色卡住 */
+            /* transition: transform 0.1s ease; */
             outline: none !important;
             user-select: none; 
         }
 
-        /* 1. Hover (僅電腦) */
+        /* Hover (僅電腦) */
         @media (hover: hover) {
             .app-card:hover {
                 transform: translateY(-2px);
                 border-color: var(--brand-accent);
                 box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* 只在電腦版啟用過渡 */
             }
             .app-card:hover .card-icon {
                 background-color: var(--brand-accent);
@@ -106,47 +110,42 @@
             }
         }
 
-        /* 2. Focus (返回時) - 強制重置為背景色 */
-        /* 使用 :not(:active) 確保手指按著的時候不會被重置 */
-        .app-card:focus:not(:active) {
+        /* Focus: 強制讓它看起來跟 Normal 一模一樣 */
+        /* 這樣就算瀏覽器判定它是 focus，看起來也是白的 */
+        .app-card:focus {
             background-color: var(--card-bg) !important;
             border-color: transparent !important;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
             transform: none !important;
         }
-        .app-card:focus:not(:active) .card-icon {
-            background-color: var(--icon-bg) !important;
-            color: var(--icon-color) !important;
-        }
-        .app-card:focus:not(:active) h3 {
-            color: var(--text-main) !important;
+        body.dark-mode .app-card:focus {
+            background-color: var(--card-bg) !important;
         }
 
-        /* 3. Active (按壓時) - 強制變色 */
+        /* Active: 只有真正按下去 (Active) 才可以變色 */
         .app-card:active {
             background-color: var(--icon-bg) !important;
             transform: scale(0.98) !important;
+            transition: none !important; /* 按下瞬間不要有延遲 */
         }
 
-        /* 深色模式修正 */
         body.dark-mode .app-card {
             border: 1px solid #27272a;
             box-shadow: none;
         }
-        body.dark-mode .app-card:focus:not(:active) {
-            background-color: var(--card-bg) !important;
-        }
 
-        /* === 搜尋框樣式 === */
+        /* === 搜尋框樣式 (實線光暈) === */
         .search-input:focus {
             outline: none;
             background-color: #ffffff;
             box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4) !important;
         }
+        
         body.dark-mode .search-input:focus {
             background-color: #27272a;
             border-color: transparent;
-            /* 深色模式：實線冷灰藍色光暈，不暈開 */
-            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.5) !important; 
+            /* 灰色實線圈圈，配合深色模式 */
+            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.25) !important; 
         }
 
         /* Toast */
@@ -324,15 +323,21 @@
             searchInput.focus();
         }
 
-        // 強制移除連結焦點
+        // 強力修正：頁面恢復顯示時，強制所有 activeElement 失焦
         window.addEventListener('pageshow', (event) => {
-            const activeElements = document.querySelectorAll('.app-card');
-            activeElements.forEach(el => {
-                el.blur(); 
-                el.style.backgroundColor = ''; 
-                el.style.borderColor = ''; 
-            });
-            if (document.activeElement) document.activeElement.blur();
+            // 加入微小延遲，確保在瀏覽器渲染完成後執行
+            setTimeout(() => {
+                if (document.activeElement) {
+                    document.activeElement.blur();
+                }
+                const activeElements = document.querySelectorAll('.app-card');
+                activeElements.forEach(el => {
+                    el.blur(); 
+                    // 雙重保險：強制移除可能殘留的 style
+                    el.style.backgroundColor = ''; 
+                    el.style.transform = '';
+                });
+            }, 10);
         });
 
         function renderCategories(filterText = "") {
@@ -360,7 +365,6 @@
                     const grid = document.createElement('div');
                     grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-4";
                     filteredItems.forEach(app => {
-                        // 加入 noopener noreferrer
                         grid.innerHTML += `
                             <a href="${app.url}" target="_blank" rel="noopener noreferrer"
                                class="app-card p-4 flex items-center gap-4 group cursor-pointer relative overflow-hidden">
