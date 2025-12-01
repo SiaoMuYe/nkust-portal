@@ -150,6 +150,28 @@
         .app-card:focus {
             outline: none !important;
             box-shadow: none !important;
+            transform: none !important;
+            background-color: var(--card-bg) !important;
+            border-color: transparent !important;
+        }
+        
+        .app-card:focus .card-icon {
+            background-color: var(--icon-bg) !important;
+            color: var(--icon-color) !important;
+        }
+        
+        .app-card:focus h3 {
+            color: var(--text-main) !important;
+        }
+        
+        .app-card:focus .fa-chevron-right {
+            color: var(--icon-color) !important;
+            opacity: 0.5 !important;
+            transform: none !important;
+        }
+
+        body.dark-mode .app-card:focus h3 {
+            color: var(--text-main) !important;
         }
 
         /* === 搜尋框與按鈕 === */
@@ -308,22 +330,41 @@
         }
 
         // ===== 觸控事件處理 (修正版) =====
+        let currentActiveCard = null; // 追蹤當前啟動的卡片
+
+        function clearAllActiveStates() {
+            document.querySelectorAll('.app-card.active').forEach(card => {
+                card.classList.remove('active');
+            });
+            currentActiveCard = null;
+        }
+
         function attachTouchHandlers() {
             document.querySelectorAll('.app-card').forEach(card => {
                 let touchStartX = 0;
                 let touchStartY = 0;
+                let touchStartTime = 0;
                 const MOVE_THRESHOLD = 10; // 移動超過10px視為滑動
+                const TAP_TIME_THRESHOLD = 300; // 快速點擊的時間閾值
 
                 // 觸控開始
                 card.addEventListener('touchstart', function(e) {
+                    // 先清除所有其他卡片的 active 狀態
+                    clearAllActiveStates();
+                    
                     const touch = e.touches[0];
                     touchStartX = touch.clientX;
                     touchStartY = touch.clientY;
+                    touchStartTime = Date.now();
+                    
                     this.classList.add('active');
+                    currentActiveCard = this;
                 }, { passive: true });
 
                 // 觸控移動 - 檢測是否滑動離開
                 card.addEventListener('touchmove', function(e) {
+                    if (this !== currentActiveCard) return;
+                    
                     const touch = e.touches[0];
                     const moveX = Math.abs(touch.clientX - touchStartX);
                     const moveY = Math.abs(touch.clientY - touchStartY);
@@ -331,46 +372,103 @@
                     // 如果移動距離超過閾值，取消點擊狀態
                     if (moveX > MOVE_THRESHOLD || moveY > MOVE_THRESHOLD) {
                         this.classList.remove('active');
+                        currentActiveCard = null;
                     }
                 }, { passive: true });
 
                 // 觸控結束
-                card.addEventListener('touchend', function() {
-                    // 延遲移除 active 類別，讓視覺效果持續到頁面跳轉
-                    setTimeout(() => {
+                card.addEventListener('touchend', function(e) {
+                    if (this !== currentActiveCard) return;
+                    
+                    const touchDuration = Date.now() - touchStartTime;
+                    
+                    // 如果是快速點擊，立即移除；如果是長按，延遲移除
+                    if (touchDuration < TAP_TIME_THRESHOLD) {
+                        // 快速點擊：保持視覺效果直到頁面跳轉
+                        setTimeout(() => {
+                            this.classList.remove('active');
+                            currentActiveCard = null;
+                        }, 100);
+                    } else {
+                        // 長按：立即移除
                         this.classList.remove('active');
-                    }, 150);
+                        currentActiveCard = null;
+                    }
                 }, { passive: true });
                 
                 // 觸控取消
                 card.addEventListener('touchcancel', function() {
                     this.classList.remove('active');
+                    if (this === currentActiveCard) {
+                        currentActiveCard = null;
+                    }
                 }, { passive: true });
 
-                // 防止 focus 干擾
+                // 防止 focus 造成的變色
                 card.addEventListener('focus', function(e) {
                     e.preventDefault();
                     this.blur();
+                }, { passive: true });
+
+                // 滑鼠事件也要處理（防止在某些觸控設備上的混合事件）
+                card.addEventListener('mousedown', function(e) {
+                    // 只在非觸控設備上執行
+                    if (e.pointerType !== 'touch') {
+                        clearAllActiveStates();
+                        this.classList.add('active');
+                        currentActiveCard = this;
+                    }
+                });
+
+                card.addEventListener('mouseup', function() {
+                    if (this === currentActiveCard) {
+                        setTimeout(() => {
+                            this.classList.remove('active');
+                            currentActiveCard = null;
+                        }, 100);
+                    }
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    if (this === currentActiveCard) {
+                        this.classList.remove('active');
+                        currentActiveCard = null;
+                    }
                 });
             });
         }
 
         // 頁面恢復時清除所有 active 狀態
         window.addEventListener('pageshow', () => {
+            clearAllActiveStates();
+            // 額外清除所有可能的 focus
             document.querySelectorAll('.app-card').forEach(el => {
-                el.classList.remove('active');
                 el.blur(); 
             });
+            if (document.activeElement && document.activeElement.classList.contains('app-card')) {
+                document.activeElement.blur();
+            }
         });
 
         // 當用戶返回頁面時清除狀態
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
-                document.querySelectorAll('.app-card').forEach(el => {
-                    el.classList.remove('active');
-                });
+                clearAllActiveStates();
             }
         });
+
+        // 頁面失去焦點時也清除（例如切換到其他應用）
+        window.addEventListener('blur', () => {
+            clearAllActiveStates();
+        });
+
+        // 監聽頁面滾動，滾動時清除 active 狀態
+        let scrollTimeout;
+        window.addEventListener('scroll', () => {
+            if (currentActiveCard) {
+                clearAllActiveStates();
+            }
+        }, { passive: true });
 
         function renderCategories(filterText = "") {
             appContainer.innerHTML = '';
