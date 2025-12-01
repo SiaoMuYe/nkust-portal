@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title>高科大 | 學生系統整合入口</title>
     
@@ -45,7 +45,6 @@
             -webkit-tap-highlight-color: transparent;
         }
         
-        /* Banner 樣式 */
         .hero-banner {
             background: linear-gradient(135deg, #002d72 0%, #1e3a8a 100%);
             color: white;
@@ -64,7 +63,7 @@
             pointer-events: none;
         }
 
-        /* === APP CARD 修正 === */
+        /* App Card */
         .app-card {
             background-color: var(--card-bg);
             border: 1px solid transparent;
@@ -72,10 +71,8 @@
             border-radius: 12px;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             outline: none !important;
-            -webkit-tap-highlight-color: transparent;
         }
 
-        /* Hover: 僅限電腦滑鼠 */
         @media (hover: hover) {
             .app-card:hover {
                 transform: translateY(-2px);
@@ -88,7 +85,6 @@
             }
         }
 
-        /* Focus: 強制清除手機返回時的選取樣式 */
         .app-card:focus {
             background-color: var(--card-bg) !important;
             border-color: transparent !important;
@@ -101,7 +97,6 @@
             color: var(--text-main) !important;
         }
 
-        /* Active: 只有按住時變色 */
         .app-card:active {
             background-color: var(--icon-bg) !important;
             transform: scale(0.98);
@@ -115,17 +110,15 @@
             background-color: var(--card-bg) !important;
         }
 
-        /* === 搜尋框樣式修正 (重點) === */
+        /* Search Input */
         .search-input:focus {
             outline: none;
             background-color: #ffffff;
-            /* 修正：淺色模式下背景是深藍色，所以光暈要是白色才看得到 */
             box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4) !important;
         }
         body.dark-mode .search-input:focus {
             background-color: #27272a;
             border-color: var(--brand-accent);
-            /* 深色模式下背景是黑色，光暈維持主題色 */
             box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2) !important; 
         }
 
@@ -152,7 +145,6 @@
             opacity: 1;
         }
         
-        /* Animation */
         .animate-card {
             opacity: 0;
             animation: fadeUp 0.5s ease-out forwards;
@@ -162,18 +154,62 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* === Header 修正 (重點) === 
-           強制移除所有邊框和陰影，消除第二條線 */
+        /* Header: 完全移除邊框和陰影 */
         header {
             border: 0 !important;
             border-bottom: 0 !important;
             box-shadow: none !important;
         }
+
+        /* === Loading Overlay (新增) === */
+        #loadingOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-body);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        #loadingOverlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--brand-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        body.dark-mode .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-left-color: var(--brand-accent);
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        /* === Footer 分隔線柔和化 (新增) === */
+        .footer-line {
+            border-top: 1px solid rgba(0, 0, 0, 0.05); /* 淺色模式極淡 */
+        }
+        body.dark-mode .footer-line {
+            border-top: 1px solid rgba(255, 255, 255, 0.05); /* 深色模式極淡 */
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <header class="sticky top-0 z-50 backdrop-blur-md bg-[var(--card-bg)]/95 transition-colors duration-300">
+    <div id="loadingOverlay">
+        <div class="spinner mb-4"></div>
+        <p class="text-sm text-[var(--text-sub)] animate-pulse">正在前往...</p>
+    </div>
+
+    <header class="sticky top-0 z-50 bg-[var(--card-bg)]/95 transition-colors duration-300">
         <div class="max-w-3xl mx-auto px-5 py-3 flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <div class="w-14 h-14 rounded-2xl bg-[#002d72] dark:bg-[#d97706] flex items-center justify-center shadow-md flex-shrink-0 relative overflow-hidden group transition-colors duration-300">
@@ -230,22 +266,19 @@
         </div>
     </main>
 
-    <footer class="border-t border-[var(--border-color)] py-8 mt-auto text-center">
+    <footer class="footer-line py-8 mt-auto text-center">
         <p class="text-xs text-[var(--text-sub)] opacity-60">&copy; 2025 NKUST Student Portal | 非官方校務整合平台</p>
     </footer>
     <div id="theme-toast">已切換模式</div>
 
     <script>
-        // PWA SW
         if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
             window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
         }
 
-        // Icons
         const iconBlue = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
         const iconAmber = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23d97706'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
 
-        // Categories Data
         const categories = [
             {
                 id: "academic", title: "教務與課程",
@@ -279,16 +312,13 @@
             }
         ];
 
-        // 搜尋與 History API 邏輯
         const searchInput = document.getElementById('searchInput');
         const clearBtn = document.getElementById('clearSearchBtn');
         const appContainer = document.getElementById('appContainer');
         const noResults = document.getElementById('noResults');
+        const loadingOverlay = document.getElementById('loadingOverlay');
 
-        searchInput.addEventListener('focus', () => {
-            history.pushState({ search: true }, "", "#search");
-        });
-
+        searchInput.addEventListener('focus', () => history.pushState({ search: true }, "", "#search"));
         searchInput.addEventListener('keyup', (e) => {
             const term = e.target.value.trim();
             renderCategories(term);
@@ -297,9 +327,7 @@
         });
 
         window.addEventListener('popstate', (event) => {
-            if (window.location.hash !== "#search") {
-                searchInput.blur();
-            }
+            if (window.location.hash !== "#search") searchInput.blur();
         });
 
         function clearSearch() {
@@ -309,29 +337,33 @@
             searchInput.focus();
         }
         
-        // 頁面恢復顯示時，強制讓所有連結失焦並清除樣式
-        window.addEventListener('pageshow', (event) => {
+        // 顯示 Loading
+        function showLoading() {
+            loadingOverlay.classList.add('active');
+        }
+
+        // 隱藏 Loading
+        function hideLoading() {
+            loadingOverlay.classList.remove('active');
             const activeElements = document.querySelectorAll('.app-card');
             activeElements.forEach(el => {
                 el.blur(); 
                 el.style.backgroundColor = ''; 
                 el.style.borderColor = ''; 
             });
-            if (document.activeElement) {
-                document.activeElement.blur();
-            }
-        });
+            if (document.activeElement) document.activeElement.blur();
+        }
 
-        // 渲染列表
+        // 當頁面從快取恢復 (按上一頁回來) 時，執行 hideLoading
+        window.addEventListener('pageshow', hideLoading);
+
         function renderCategories(filterText = "") {
             appContainer.innerHTML = '';
             let hasResults = false;
             let delayCounter = 2;
 
             categories.forEach(cat => {
-                const filteredItems = cat.items.filter(item => {
-                    return (item.name + item.desc).toLowerCase().includes(filterText.toLowerCase());
-                });
+                const filteredItems = cat.items.filter(item => (item.name + item.desc).toLowerCase().includes(filterText.toLowerCase()));
 
                 if (filteredItems.length > 0) {
                     hasResults = true;
@@ -350,8 +382,9 @@
                     const grid = document.createElement('div');
                     grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-4";
                     filteredItems.forEach(app => {
+                        // 新增 onclick="showLoading()"
                         grid.innerHTML += `
-                            <a href="${app.url}" target="_blank"
+                            <a href="${app.url}" target="_blank" onclick="showLoading()"
                                class="app-card p-4 flex items-center gap-4 group cursor-pointer relative overflow-hidden">
                                 <div class="card-icon w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-[var(--icon-bg)] text-[var(--icon-color)] transition-all duration-300">
                                     <i class="${app.icon} text-lg"></i>
@@ -371,14 +404,10 @@
                 }
             });
 
-            if (!hasResults) {
-                noResults.classList.remove('hidden');
-            } else {
-                noResults.classList.add('hidden');
-            }
+            if (!hasResults) noResults.classList.remove('hidden');
+            else noResults.classList.add('hidden');
         }
 
-        // Theme Logic
         let currentMode = localStorage.getItem('theme_mode') || 'auto';
         function initTheme() { applyTheme(currentMode); }
 
