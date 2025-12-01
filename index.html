@@ -64,7 +64,21 @@
             pointer-events: none;
         }
 
-        /* App Card 樣式 */
+        /* === APP CARD 狀態樣式修正 === 
+           目標：手機上絕不顯示橘色 (Hover)，返回時不要有顏色，按住時是灰色
+        */
+
+        .app-card {
+            background-color: var(--card-bg);
+            border: 1px solid transparent;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            border-radius: 12px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 1. 只有滑鼠懸停時 (電腦版) 才會出現橘色框和橘色圖示 */
         @media (hover: hover) {
             .app-card:hover {
                 transform: translateY(-2px);
@@ -75,51 +89,54 @@
                 background-color: var(--brand-accent);
                 color: white;
             }
-        }
-        .app-card:active {
-            transform: scale(0.98);
-            background-color: var(--icon-bg);
-            transition: transform 0.1s;
-        }
-        
-        /* 重點修改：這裡移除了 focus 時的樣式影響，
-           並確保 outline 不會顯示，解決返回時按鈕變灰/有框線的問題 
-        */
-        .app-card:focus {
-            outline: none;
-            background-color: var(--card-bg); /* 強制背景回歸白色 */
-        }
-        /* 只有在真正按住時才變色 */
-        .app-card:active {
-            background-color: var(--icon-bg);
+            .app-card:hover h3 {
+                color: var(--brand-primary);
+            }
+            body.dark-mode .app-card:hover h3 {
+                color: #60a5fa;
+            }
         }
 
-        .app-card {
-            background-color: var(--card-bg);
-            border: 1px solid transparent;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            border-radius: 12px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            outline: none;
-            -webkit-tap-highlight-color: transparent;
+        /* 2. 手機版 Focus 狀態 (返回時) - 強制覆寫為「預設白色」
+           這樣就算瀏覽器認為它是 Focus，也看不出來，不會變成橘色 
+        */
+        .app-card:focus {
+            background-color: var(--card-bg) !important;
+            border-color: transparent !important;
         }
+        .app-card:focus .card-icon {
+            background-color: var(--icon-bg) !important;
+            color: var(--icon-color) !important;
+        }
+        .app-card:focus h3 {
+            color: var(--text-main) !important;
+        }
+
+        /* 3. 只有「手指按下去」的那一刻 (Active) 才是灰色 */
+        .app-card:active {
+            background-color: var(--icon-bg) !important;
+            transform: scale(0.98);
+        }
+        
+        /* 深色模式修正 */
         body.dark-mode .app-card {
             border: 1px solid #27272a;
             box-shadow: none;
         }
 
-        /* 搜尋框樣式 */
+        /* === 搜尋框樣式修正 ===
+           目標：淺色模式要有選取框 (Ring)
+        */
         .search-input:focus {
             outline: none;
-            border-color: transparent;
             background-color: #ffffff;
-            color: var(--text-main);
-            box-shadow: 0 0 0 3px rgba(0, 45, 114, 0.15);
+            /* 修正：加回藍色光暈，rgba透明度設為 0.2 */
+            box-shadow: 0 0 0 3px rgba(0, 45, 114, 0.2) !important; 
         }
         body.dark-mode .search-input:focus {
             background-color: #27272a;
             border-color: var(--brand-accent);
-            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2); 
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2) !important; 
         }
 
         /* Toast */
@@ -153,6 +170,12 @@
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 強制移除 Header 所有邊框 */
+        header {
+            border-bottom: 0 !important;
+            box-shadow: none !important;
         }
     </style>
 </head>
@@ -294,23 +317,16 @@
             searchInput.focus();
         }
         
-        function handleLinkClick() {
-            // 點擊後小延遲失焦，但主要的修正在 pageshow
-            setTimeout(() => {
-                if(document.activeElement) document.activeElement.blur();
-            }, 300);
-        }
-
-        // 重點修改：監聽頁面顯示事件 (從上一頁回來時觸發)
-        // 強制清除所有焦點，解決按鈕變灰的問題
+        // 重點：頁面恢復顯示時，強制讓所有連結失焦並清除樣式
         window.addEventListener('pageshow', (event) => {
-            // 嘗試讓所有可能的焦點元素失去焦點
+            const activeElements = document.querySelectorAll('.app-card');
+            activeElements.forEach(el => {
+                el.blur(); 
+                el.style.backgroundColor = ''; 
+                el.style.borderColor = ''; 
+            });
             if (document.activeElement) {
                 document.activeElement.blur();
-            }
-            // 額外保險：如果頁面是從快取中恢復的
-            if (event.persisted) {
-                document.querySelectorAll('.app-card').forEach(el => el.blur());
             }
         });
 
@@ -343,7 +359,7 @@
                     grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-4";
                     filteredItems.forEach(app => {
                         grid.innerHTML += `
-                            <a href="${app.url}" target="_blank" onclick="handleLinkClick()"
+                            <a href="${app.url}" target="_blank"
                                class="app-card p-4 flex items-center gap-4 group cursor-pointer relative overflow-hidden">
                                 <div class="card-icon w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-[var(--icon-bg)] text-[var(--icon-color)] transition-all duration-300">
                                     <i class="${app.icon} text-lg"></i>
