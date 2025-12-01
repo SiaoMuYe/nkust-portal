@@ -215,32 +215,48 @@
             color: #60a5fa !important; 
         }
 
-        /* Focus 狀態完全禁用視覺回饋 */
-        .app-card:focus {
+        /* Focus 狀態完全禁用視覺回饋 - 強制覆蓋所有可能的樣式 */
+        .app-card:focus,
+        .app-card:focus-visible,
+        .app-card:focus-within {
             outline: none !important;
-            box-shadow: none !important;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
             transform: none !important;
             background-color: var(--card-bg) !important;
             border-color: transparent !important;
         }
         
-        .app-card:focus .card-icon {
+        .app-card:focus .card-icon,
+        .app-card:focus-visible .card-icon,
+        .app-card:focus-within .card-icon {
             background-color: var(--icon-bg) !important;
             color: var(--icon-color) !important;
         }
         
-        .app-card:focus h3 {
+        .app-card:focus h3,
+        .app-card:focus-visible h3,
+        .app-card:focus-within h3 {
             color: var(--text-main) !important;
         }
         
-        .app-card:focus .fa-chevron-right {
+        .app-card:focus .fa-chevron-right,
+        .app-card:focus-visible .fa-chevron-right,
+        .app-card:focus-within .fa-chevron-right {
             color: var(--icon-color) !important;
             opacity: 0.5 !important;
             transform: none !important;
         }
 
-        body.dark-mode .app-card:focus h3 {
+        body.dark-mode .app-card:focus h3,
+        body.dark-mode .app-card:focus-visible h3,
+        body.dark-mode .app-card:focus-within h3 {
             color: var(--text-main) !important;
+        }
+        
+        body.dark-mode .app-card:focus,
+        body.dark-mode .app-card:focus-visible,
+        body.dark-mode .app-card:focus-within {
+            box-shadow: none !important;
         }
 
         /* === 搜尋框與按鈕 === */
@@ -617,39 +633,94 @@
             }, { passive: true });
 
             // 為每個卡片添加 focus 防護
+            // 全域攔截所有 focus 事件
+            document.addEventListener('focusin', function(e) {
+                if (e.target.classList.contains('app-card')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.target.blur();
+                    
+                    // 強制移除可能的 active 狀態
+                    e.target.classList.remove('active');
+                    
+                    // 讓 body 獲得焦點
+                    document.body.focus();
+                    setTimeout(() => document.body.blur(), 0);
+                }
+            }, true); // 使用捕獲階段
+            
+            // 個別卡片也加上防護
             document.querySelectorAll('.app-card').forEach(card => {
                 card.addEventListener('focus', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     this.blur();
-                }, { passive: true });
+                    this.classList.remove('active');
+                });
+                
+                // 移除 tabindex 避免可聚焦
+                card.removeAttribute('tabindex');
+                card.setAttribute('tabindex', '-1');
             });
         }
 
-        // 頁面恢復時清除所有 active 狀態 (強化版)
+        // 頁面恢復時清除所有 active 狀態 (終極版)
         function forceCleanup() {
-            // 方法1: 清除函數
-            clearAllActiveStates();
+            // 延遲執行,確保在瀏覽器恢復狀態之後
+            setTimeout(() => {
+                // 方法1: 清除函數
+                clearAllActiveStates();
+                
+                // 方法2: 暴力清除所有可能的狀態
+                const allCards = document.querySelectorAll('.app-card');
+                allCards.forEach(el => {
+                    // 移除所有可能的 class
+                    el.classList.remove('active');
+                    
+                    // 強制 blur 多次
+                    el.blur();
+                    setTimeout(() => el.blur(), 10);
+                    setTimeout(() => el.blur(), 50);
+                    
+                    // 清除所有 inline styles
+                    el.style.cssText = '';
+                    
+                    // 強制移除 tabindex
+                    el.removeAttribute('tabindex');
+                });
+                
+                // 方法3: 清除 document.activeElement
+                if (document.activeElement) {
+                    document.activeElement.blur();
+                    setTimeout(() => {
+                        if (document.activeElement && document.activeElement.classList?.contains('app-card')) {
+                            document.activeElement.blur();
+                        }
+                    }, 100);
+                }
+                
+                // 方法4: 強制讓 body 獲得焦點
+                document.body.focus();
+                setTimeout(() => document.body.blur(), 10);
+                
+                // 方法5: 重置所有狀態變數
+                currentActiveCard = null;
+                lastProcessedCard = null;
+                isScrolling = false;
+                hasMovedVertically = false;
+            }, 0);
             
-            // 方法2: 暴力清除所有 active class
-            const allCards = document.querySelectorAll('.app-card');
-            allCards.forEach(el => {
-                el.classList.remove('active');
-                el.blur();
-                // 強制重置 inline style
-                el.style.transform = '';
-                el.style.backgroundColor = '';
-            });
-            
-            // 方法3: 清除 activeElement
-            if (document.activeElement && document.activeElement.classList.contains('app-card')) {
-                document.activeElement.blur();
-            }
-            
-            // 方法4: 重置所有狀態變數
-            currentActiveCard = null;
-            lastProcessedCard = null;
-            isScrolling = false;
-            hasMovedVertically = false;
+            // 再延遲一次,雙重保險
+            setTimeout(() => {
+                document.querySelectorAll('.app-card.active').forEach(card => {
+                    card.classList.remove('active');
+                    card.blur();
+                });
+                
+                if (document.activeElement?.classList?.contains('app-card')) {
+                    document.activeElement.blur();
+                }
+            }, 100);
         }
         
         window.addEventListener('pageshow', (event) => {
@@ -667,7 +738,6 @@
         });
         
         window.addEventListener('focus', () => {
-            // 視窗重新獲得焦點時也清理
             forceCleanup();
         });
 
