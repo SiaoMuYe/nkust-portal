@@ -9,7 +9,8 @@
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#18181b" media="(prefers-color-scheme: dark)">
 
-    <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E">
+    <link id="dynamic-favicon" rel="icon" type="image/png" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="manifest" href="manifest.json">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,11 +19,11 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
         
-        /* 1. 隱藏捲軸 */
+        /* 1. 隱藏滾軸 */
         * { -ms-overflow-style: none !important; scrollbar-width: none !important; }
         *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; background: transparent !important; }
 
-        /* 2. 鎖定重整 */
+        /* 2. 鎖定過度滾動 */
         html, body { overscroll-behavior-y: none; height: 100%; overflow-y: auto; }
 
         :root {
@@ -71,7 +72,7 @@
             pointer-events: none;
         }
 
-        /* === App Card === */
+        /* === App Card 基礎樣式 === */
         .app-card {
             background-color: var(--card-bg);
             border: 1px solid transparent;
@@ -79,16 +80,23 @@
             border-radius: 12px;
             outline: none !important;
             user-select: none;
-            transition: transform 0.1s ease;
+            transition: transform 0.15s ease, background-color 0.15s ease;
+            position: relative;
         }
-        /* 常態下箭頭的顏色 */
-        .app-card .fa-chevron-right {
-            color: var(--icon-color); /* 預設深灰 */
-            opacity: 0.5;
-            transition: color 0.2s, transform 0.2s;
+        
+        body.dark-mode .app-card { 
+            border: 1px solid #27272a; 
+            box-shadow: none; 
         }
 
-        /* Hover (電腦) */
+        /* 箭頭預設樣式 */
+        .app-card .fa-chevron-right {
+            color: var(--icon-color);
+            opacity: 0.5;
+            transition: color 0.2s, transform 0.2s, opacity 0.2s;
+        }
+
+        /* === Hover (桌面) === */
         @media (hover: hover) {
             .app-card:hover {
                 transform: translateY(-2px);
@@ -107,50 +115,42 @@
                 transform: translateX(2px);
                 opacity: 1;
             }
-            body.dark-mode .app-card:hover h3 { color: #60a5fa; }
+            body.dark-mode .app-card:hover h3 { 
+                color: #60a5fa; 
+            }
         }
 
-        /* Focus: 強制保持原狀 (防沾黏) */
-        .app-card:focus {
-            background-color: var(--card-bg) !important;
-            border-color: transparent !important;
-        }
-        .app-card:focus .card-icon {
+        /* === Active/Clicking 狀態 (手機觸控) === */
+        .app-card.active {
+            transform: scale(0.98) !important;
             background-color: var(--icon-bg) !important;
-            color: var(--icon-color) !important;
+            transition: none !important;
         }
-        .app-card:focus h3 { color: var(--text-main) !important; }
-        .app-card:focus .fa-chevron-right { color: var(--icon-color) !important; opacity: 0.5 !important; }
-
-        /* === 點擊狀態 (Clicking State - JS 控制) === */
-        .app-card.clicking {
-            transform: scale(0.98);
-            background-color: var(--icon-bg) !important; /* 卡片變灰 */
-        }
-        .app-card.clicking .card-icon {
-            background-color: var(--brand-accent) !important; /* 圖標底變橘 */
-            color: white !important;                          /* 圖標變白 */
-            transition: none;
-        }
-        .app-card.clicking h3 {
-            color: var(--brand-primary) !important;           /* 標題變藍 */
-            transition: none;
-        }
-        /* 新增：箭頭變色規則 */
-        .app-card.clicking .fa-chevron-right {
-            color: var(--brand-accent) !important;            /* 箭頭變橘 */
-            opacity: 1 !important;
-            transform: translateX(2px);                       /* 稍微右移 */
-            transition: none;
-        }
-
-        /* 深色模式 Active */
-        body.dark-mode .app-card { border: 1px solid #27272a; box-shadow: none; }
-        body.dark-mode .app-card:focus { background-color: var(--card-bg) !important; }
         
-        body.dark-mode .app-card.clicking h3 { color: #60a5fa !important; }
-        body.dark-mode .app-card.clicking .fa-chevron-right { color: var(--brand-accent) !important; }
+        .app-card.active .card-icon {
+            background-color: var(--brand-accent) !important;
+            color: white !important;
+        }
+        
+        .app-card.active h3 {
+            color: var(--brand-primary) !important;
+        }
+        
+        .app-card.active .fa-chevron-right {
+            color: var(--brand-accent) !important;
+            opacity: 1 !important;
+            transform: translateX(2px) !important;
+        }
+        
+        body.dark-mode .app-card.active h3 { 
+            color: #60a5fa !important; 
+        }
 
+        /* Focus 狀態完全禁用視覺回饋 */
+        .app-card:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
 
         /* === 搜尋框與按鈕 === */
         .search-input:focus, button:focus {
@@ -251,9 +251,6 @@
             window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
         }
 
-        const iconBlue = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
-        const iconAmber = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23d97706'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
-
         const categories = [
             {
                 id: "academic", title: "教務與課程",
@@ -262,7 +259,7 @@
                     { name: "校務單一入口", url: "https://webap.nkust.edu.tw/nkust/", icon: "fa-solid fa-id-card", desc: "各類校務系統入口" },
                     { name: "數位教學平台", url: "https://elearning.nkust.edu.tw/moocs/#/home", icon: "fa-solid fa-chalkboard-user", desc: "課程教材/作業繳交" },
                     { name: "Zuvio", url: "https://irs.zuvio.com.tw/irs/login", icon: "fa-solid fa-comments", desc: "課堂互動/點名/測驗" },
-                    { name: "選課系統", url: "https://aais5.nkust.edu.tw/selcrs_std", icon: "fa-solid fa-list-check", desc: "加退選/搶課入口" }
+                    { name: "選課系統", url: "https://aais5.nkust.edu.tw/selcrs_std", icon: "fa-solid fa-list-check", desc: "加退選/涼課入口" }
                 ]
             },
             {
@@ -296,11 +293,10 @@
         searchInput.addEventListener('keyup', (e) => {
             const term = e.target.value.trim();
             renderCategories(term);
-            if(term) clearBtn.classList.remove('hidden');
-            else clearBtn.classList.add('hidden');
+            clearBtn.classList.toggle('hidden', !term);
         });
 
-        window.addEventListener('popstate', (event) => {
+        window.addEventListener('popstate', () => {
             if (window.location.hash !== "#search") searchInput.blur();
         });
 
@@ -311,30 +307,69 @@
             searchInput.focus();
         }
 
-        // JS 接管觸控狀態
+        // ===== 觸控事件處理 (修正版) =====
         function attachTouchHandlers() {
             document.querySelectorAll('.app-card').forEach(card => {
-                card.addEventListener('touchstart', function() {
-                    this.classList.add('clicking');
+                let touchStartX = 0;
+                let touchStartY = 0;
+                const MOVE_THRESHOLD = 10; // 移動超過10px視為滑動
+
+                // 觸控開始
+                card.addEventListener('touchstart', function(e) {
+                    const touch = e.touches[0];
+                    touchStartX = touch.clientX;
+                    touchStartY = touch.clientY;
+                    this.classList.add('active');
                 }, { passive: true });
 
+                // 觸控移動 - 檢測是否滑動離開
+                card.addEventListener('touchmove', function(e) {
+                    const touch = e.touches[0];
+                    const moveX = Math.abs(touch.clientX - touchStartX);
+                    const moveY = Math.abs(touch.clientY - touchStartY);
+                    
+                    // 如果移動距離超過閾值，取消點擊狀態
+                    if (moveX > MOVE_THRESHOLD || moveY > MOVE_THRESHOLD) {
+                        this.classList.remove('active');
+                    }
+                }, { passive: true });
+
+                // 觸控結束
                 card.addEventListener('touchend', function() {
-                    this.classList.remove('clicking');
-                });
+                    // 延遲移除 active 類別，讓視覺效果持續到頁面跳轉
+                    setTimeout(() => {
+                        this.classList.remove('active');
+                    }, 150);
+                }, { passive: true });
                 
+                // 觸控取消
                 card.addEventListener('touchcancel', function() {
-                    this.classList.remove('clicking');
+                    this.classList.remove('active');
+                }, { passive: true });
+
+                // 防止 focus 干擾
+                card.addEventListener('focus', function(e) {
+                    e.preventDefault();
+                    this.blur();
                 });
             });
         }
 
-        // 頁面恢復時，強制清除
-        window.addEventListener('pageshow', (event) => {
+        // 頁面恢復時清除所有 active 狀態
+        window.addEventListener('pageshow', () => {
             document.querySelectorAll('.app-card').forEach(el => {
-                el.classList.remove('clicking');
+                el.classList.remove('active');
                 el.blur(); 
             });
-            if (document.activeElement) document.activeElement.blur();
+        });
+
+        // 當用戶返回頁面時清除狀態
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                document.querySelectorAll('.app-card').forEach(el => {
+                    el.classList.remove('active');
+                });
+            }
         });
 
         function renderCategories(filterText = "") {
@@ -343,7 +378,9 @@
             let delayCounter = 2;
 
             categories.forEach(cat => {
-                const filteredItems = cat.items.filter(item => (item.name + item.desc).toLowerCase().includes(filterText.toLowerCase()));
+                const filteredItems = cat.items.filter(item => 
+                    (item.name + item.desc).toLowerCase().includes(filterText.toLowerCase())
+                );
 
                 if (filteredItems.length > 0) {
                     hasResults = true;
@@ -369,10 +406,10 @@
                                     <i class="${app.icon} text-lg"></i>
                                 </div>
                                 <div class="flex-grow min-w-0">
-                                    <h3 class="font-bold text-[var(--text-main)] text-[15px] group-hover:text-[var(--brand-primary)] dark:group-hover:text-blue-400 transition-colors">${app.name}</h3>
-                                    <p class="text-xs text-[var(--text-sub)] mt-1 truncate group-hover:opacity-80">${app.desc}</p>
+                                    <h3 class="font-bold text-[var(--text-main)] text-[15px] transition-colors">${app.name}</h3>
+                                    <p class="text-xs text-[var(--text-sub)] mt-1 truncate">${app.desc}</p>
                                 </div>
-                                <div class="text-[var(--border-color)] group-hover:text-[var(--brand-accent)] group-hover:translate-x-1 transition-all">
+                                <div class="transition-all">
                                     <i class="fa-solid fa-chevron-right text-xs"></i>
                                 </div>
                             </a>
@@ -383,9 +420,9 @@
                 }
             });
 
-            if (!hasResults) noResults.classList.remove('hidden');
-            else noResults.classList.add('hidden');
+            noResults.classList.toggle('hidden', hasResults);
             
+            // 重新附加觸控事件
             attachTouchHandlers();
         }
 
@@ -396,8 +433,6 @@
             let isDark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
             document.body.classList.toggle('dark-mode', isDark);
             document.documentElement.classList.toggle('dark', isDark);
-            const link = document.querySelector("link[rel~='icon']");
-            if(link) link.href = isDark ? iconAmber : iconBlue;
             
             const icon = document.getElementById('themeIcon');
             if (mode === 'light') icon.className = 'fa-solid fa-sun text-lg';
@@ -408,24 +443,15 @@
         }
 
         function toggleThemeMode(btn) {
-            let nextMode = 'light';
-            let toastText = "已切換至淺色模式";
-
-            if (currentMode === 'light') {
-                nextMode = 'dark';
-                toastText = "已切換至深色模式";
-            } else if (currentMode === 'dark') {
-                nextMode = 'auto';
-                toastText = "已切換至自動跟隨模式";
-            } else {
-                nextMode = 'light';
-                toastText = "已切換至淺色模式";
-            }
-
-            currentMode = nextMode;
-            localStorage.setItem('theme_mode', nextMode);
-            applyTheme(nextMode);
-            showToast(toastText);
+            const modes = ['light', 'dark', 'auto'];
+            const texts = ['已切換至淺色模式', '已切換至深色模式', '已切換至自動跟隨模式'];
+            const currentIndex = modes.indexOf(currentMode);
+            const nextIndex = (currentIndex + 1) % 3;
+            
+            currentMode = modes[nextIndex];
+            localStorage.setItem('theme_mode', currentMode);
+            applyTheme(currentMode);
+            showToast(texts[nextIndex]);
             
             if (btn) btn.blur();
         }
@@ -449,15 +475,15 @@
             
             containerEl.className = "flex items-center gap-2 mb-1";
             if (h >= 5 && h < 12) {
-                textEl.textContent = "早安，同學";
+                textEl.textContent = "早安,同學";
                 iconEl.className = "fa-regular fa-sun";
                 containerEl.classList.add(isDark ? 'text-yellow-400' : 'text-yellow-400/90');
             } else if (h >= 12 && h < 18) {
-                textEl.textContent = "午安，同學";
+                textEl.textContent = "午安,同學";
                 iconEl.className = "fa-solid fa-sun";
                 containerEl.classList.add(isDark ? 'text-orange-400' : 'text-orange-400');
             } else {
-                textEl.textContent = "晚安，同學";
+                textEl.textContent = "晚安,同學";
                 iconEl.className = "fa-solid fa-moon";
                 containerEl.classList.add(isDark ? 'text-yellow-400' : 'text-yellow-300');
             }
