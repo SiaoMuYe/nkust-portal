@@ -18,7 +18,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
         
-        /* === 1. 隱藏捲軸 === */
+        /* 1. 隱藏捲軸 */
         * {
             -ms-overflow-style: none !important;
             scrollbar-width: none !important;
@@ -30,7 +30,7 @@
             background: transparent !important;
         }
 
-        /* === 2. 鎖定重整 === */
+        /* 2. 鎖定重整 */
         html, body {
             overscroll-behavior-y: none;
             height: 100%;
@@ -65,7 +65,6 @@
             -webkit-tap-highlight-color: transparent;
         }
         
-        /* Banner */
         .hero-banner {
             background: linear-gradient(135deg, #002d72 0%, #1e3a8a 100%);
             color: white;
@@ -90,18 +89,18 @@
             border: 1px solid transparent;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
             border-radius: 12px;
-            /* 移除 transition 避免顏色切換延遲 */
             outline: none !important;
-            user-select: none; 
+            user-select: none;
+            transform: scale(1);
+            transition: transform 0.1s ease, background-color 0.1s ease;
         }
 
-        /* Hover (僅電腦) */
+        /* Hover (電腦) */
         @media (hover: hover) {
             .app-card:hover {
                 transform: translateY(-2px);
                 border-color: var(--brand-accent);
                 box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             }
             .app-card:hover .card-icon {
                 background-color: var(--brand-accent);
@@ -115,32 +114,68 @@
             border-color: transparent !important;
             transform: none !important;
         }
-        body.dark-mode .app-card:focus {
-            background-color: var(--card-bg) !important;
-        }
-
-        /* Active: 按下時變色 (這才是我們要的點擊回饋) */
-        .app-card:active {
+        .app-card:focus .card-icon {
             background-color: var(--icon-bg) !important;
-            transform: scale(0.98) !important;
+            color: var(--icon-color) !important;
+        }
+        .app-card:focus h3 {
+            color: var(--text-main) !important;
+        }
+        
+        /* === 關鍵修正：Active 狀態變色規則 (由 JS 控制 .is-active) === */
+        
+        /* 1. 卡片背景變灰 */
+        .app-card.is-active {
+            background-color: var(--icon-bg) !important;
+            transform: scale(0.98);
+        }
+        
+        /* 2. 圖標容器背景變透明，圖標顏色變深灰 */
+        .app-card.is-active .card-icon {
+            background-color: transparent !important;
+            color: var(--text-main) !important;
+            transition: none;
+        }
+        
+        /* 3. 標題文字顏色確保為深灰 */
+        .app-card.is-active h3 {
+             color: var(--text-main) !important;
+             transition: none;
         }
 
+        /* 深色模式適配 */
         body.dark-mode .app-card {
             border: 1px solid #27272a;
             box-shadow: none;
         }
+        body.dark-mode .app-card:focus {
+            background-color: var(--card-bg) !important;
+        }
+        body.dark-mode .app-card.is-active {
+            background-color: var(--icon-bg) !important;
+        }
+        body.dark-mode .app-card.is-active .card-icon {
+             color: var(--text-main) !important;
+        }
 
-        /* === 搜尋框樣式 === */
-        .search-input:focus {
+
+        /* === 搜尋框與按鈕 Focus 樣式 === */
+        .search-input:focus, 
+        button:focus {
             outline: none;
             background-color: #ffffff;
             box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4) !important;
         }
         
-        body.dark-mode .search-input:focus {
+        body.dark-mode .search-input:focus,
+        body.dark-mode button:focus {
             background-color: #27272a;
             border-color: transparent;
-            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.25) !important; 
+            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.5) !important; 
+        }
+        
+        button {
+            border-radius: 9999px;
         }
 
         /* Toast */
@@ -187,11 +222,6 @@
         body.dark-mode .footer-line {
             border-top: 1px solid rgba(255, 255, 255, 0.05); 
         }
-        
-        /* 針對主題按鈕的 Focus 清除 (避免切換後殘留框線) */
-        button:focus {
-            outline: none;
-        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -208,7 +238,7 @@
                     <p class="text-xs text-[var(--text-sub)] font-medium mt-0.5">學生系統整合入口</p>
                 </div>
             </div>
-            <button onclick="toggleThemeMode()" class="w-10 h-10 rounded-full hover:bg-[var(--icon-bg)] flex items-center justify-center text-[var(--text-sub)] transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700 relative group">
+            <button onclick="toggleThemeMode(this)" class="w-10 h-10 rounded-full hover:bg-[var(--icon-bg)] flex items-center justify-center text-[var(--text-sub)] transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700 relative group">
                 <i id="themeIcon" class="fa-solid fa-circle-half-stroke text-lg"></i>
             </button>
         </div>
@@ -323,21 +353,25 @@
             searchInput.focus();
         }
 
-        // 強力修正：頁面恢復顯示時，強制所有 activeElement 失焦
-        window.addEventListener('pageshow', (event) => {
-            // 加入微小延遲，確保在瀏覽器渲染完成後執行
-            setTimeout(() => {
-                if (document.activeElement) {
-                    document.activeElement.blur();
-                }
-                const activeElements = document.querySelectorAll('.app-card');
-                activeElements.forEach(el => {
-                    el.blur(); 
-                    el.style.backgroundColor = ''; 
-                    el.style.transform = '';
+        // === 關鍵修正：使用 JS 主動管理觸控狀態 ===
+        function attachTouchHandlers() {
+            document.querySelectorAll('.app-card').forEach(card => {
+                // 手指按下：加上 active class
+                card.addEventListener('touchstart', function() {
+                    this.classList.add('is-active');
+                }, { passive: true });
+
+                // 手指離開或取消：移除 active class
+                card.addEventListener('touchend', function() {
+                    this.classList.remove('is-active');
+                    // 點擊後立刻失焦，防止返回沾黏
+                    setTimeout(() => this.blur(), 50);
                 });
-            }, 10);
-        });
+                card.addEventListener('touchcancel', function() {
+                    this.classList.remove('is-active');
+                });
+            });
+        }
 
         function renderCategories(filterText = "") {
             appContainer.innerHTML = '';
@@ -364,11 +398,8 @@
                     const grid = document.createElement('div');
                     grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-4";
                     filteredItems.forEach(app => {
-                        // 關鍵修正：onclick="setTimeout(() => this.blur(), 100)"
-                        // 在跳轉前強制失焦，解決返回後黏滯問題
                         grid.innerHTML += `
-                            <a href="${app.url}" target="_blank" rel="noopener noreferrer" 
-                               onclick="setTimeout(() => this.blur(), 100)"
+                            <a href="${app.url}" target="_blank" rel="noopener noreferrer"
                                class="app-card p-4 flex items-center gap-4 group cursor-pointer relative overflow-hidden">
                                 <div class="card-icon w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-[var(--icon-bg)] text-[var(--icon-color)] transition-all duration-300">
                                     <i class="${app.icon} text-lg"></i>
@@ -390,6 +421,9 @@
 
             if (!hasResults) noResults.classList.remove('hidden');
             else noResults.classList.add('hidden');
+            
+            // 渲染完後綁定觸控事件
+            attachTouchHandlers();
         }
 
         let currentMode = localStorage.getItem('theme_mode') || 'auto';
@@ -410,7 +444,7 @@
             updateGreeting(isDark);
         }
 
-        function toggleThemeMode() {
+        function toggleThemeMode(btn) {
             let nextMode = 'light';
             let toastText = "已切換至淺色模式";
 
@@ -430,10 +464,8 @@
             applyTheme(nextMode);
             showToast(toastText);
             
-            // 修正：切換完後強制讓按鈕失焦，消除選取框
-            if (document.activeElement) {
-                document.activeElement.blur();
-            }
+            // 切換後立刻失焦，移除選取框
+            if (btn) btn.blur();
         }
 
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
