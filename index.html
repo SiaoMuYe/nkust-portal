@@ -81,6 +81,19 @@
             background-color: var(--icon-bg);
             transition: transform 0.1s;
         }
+        
+        /* 重點修改：這裡移除了 focus 時的樣式影響，
+           並確保 outline 不會顯示，解決返回時按鈕變灰/有框線的問題 
+        */
+        .app-card:focus {
+            outline: none;
+            background-color: var(--card-bg); /* 強制背景回歸白色 */
+        }
+        /* 只有在真正按住時才變色 */
+        .app-card:active {
+            background-color: var(--icon-bg);
+        }
+
         .app-card {
             background-color: var(--card-bg);
             border: 1px solid transparent;
@@ -88,6 +101,7 @@
             border-radius: 12px;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             outline: none;
+            -webkit-tap-highlight-color: transparent;
         }
         body.dark-mode .app-card {
             border: 1px solid #27272a;
@@ -108,7 +122,7 @@
             box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2); 
         }
 
-        /* Toast (修改處：字體變細) */
+        /* Toast */
         #theme-toast {
             position: fixed;
             bottom: 20px;
@@ -119,7 +133,7 @@
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 13px;
-            font-weight: 300; /* 讓字體變細 */
+            font-weight: 300;
             letter-spacing: 0.5px;
             opacity: 0;
             transition: all 0.3s ease;
@@ -144,7 +158,7 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <header class="sticky top-0 z-50 backdrop-blur-md bg-[var(--card-bg)]/95 border-b border-gray-200/50 dark:border-white/5 transition-colors duration-300">
+    <header class="sticky top-0 z-50 backdrop-blur-md bg-[var(--card-bg)]/95 transition-colors duration-300">
         <div class="max-w-3xl mx-auto px-5 py-3 flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <div class="w-14 h-14 rounded-2xl bg-[#002d72] dark:bg-[#d97706] flex items-center justify-center shadow-md flex-shrink-0 relative overflow-hidden group transition-colors duration-300">
@@ -281,8 +295,24 @@
         }
         
         function handleLinkClick() {
-            setTimeout(() => document.activeElement.blur(), 200);
+            // 點擊後小延遲失焦，但主要的修正在 pageshow
+            setTimeout(() => {
+                if(document.activeElement) document.activeElement.blur();
+            }, 300);
         }
+
+        // 重點修改：監聽頁面顯示事件 (從上一頁回來時觸發)
+        // 強制清除所有焦點，解決按鈕變灰的問題
+        window.addEventListener('pageshow', (event) => {
+            // 嘗試讓所有可能的焦點元素失去焦點
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
+            // 額外保險：如果頁面是從快取中恢復的
+            if (event.persisted) {
+                document.querySelectorAll('.app-card').forEach(el => el.blur());
+            }
+        });
 
         // 渲染列表
         function renderCategories(filterText = "") {
@@ -359,7 +389,6 @@
             updateGreeting(isDark);
         }
 
-        // 修改處：文字更正為「跟隨模式」
         function toggleThemeMode() {
             let nextMode = 'light';
             let toastText = "已切換至淺色模式";
