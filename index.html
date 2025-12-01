@@ -18,23 +18,21 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
         
-        /* === 1. 核彈級隱藏捲軸 (Hide Scrollbar Globally) === */
+        /* === 全域設置：隱藏捲軸與鎖定重整 === */
         * {
-            -ms-overflow-style: none !important;  /* IE and Edge */
-            scrollbar-width: none !important;  /* Firefox */
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
         }
         *::-webkit-scrollbar {
-            display: none !important; /* Chrome, Safari, Opera */
+            display: none !important;
             width: 0 !important;
             height: 0 !important;
             background: transparent !important;
         }
-
-        /* === 2. 強制鎖定下拉重整 (Disable Pull-to-Refresh) === */
         html, body {
-            overscroll-behavior-y: none; /* 關鍵：禁止頂部溢出行為 */
-            height: 100%; /* 確保高度填滿，讓 overscroll 生效 */
-            overflow-y: auto; /* 允許滑動，但不允許重整 */
+            overscroll-behavior-y: none; /* 禁止下拉重整 */
+            height: 100%;
+            overflow-y: auto;
         }
 
         :root {
@@ -84,16 +82,18 @@
             pointer-events: none;
         }
 
-        /* App Card */
+        /* === App Card === */
         .app-card {
             background-color: var(--card-bg);
             border: 1px solid transparent;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
             border-radius: 12px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.1s ease, background-color 0.1s ease;
             outline: none !important;
+            user-select: none; 
         }
 
+        /* Hover (僅電腦) */
         @media (hover: hover) {
             .app-card:hover {
                 transform: translateY(-2px);
@@ -106,18 +106,16 @@
             }
         }
 
+        /* Focus (返回時) - 強制恢復原狀 */
         .app-card:focus {
-            background-color: var(--card-bg) !important;
-            border-color: transparent !important;
+            background-color: var(--card-bg); 
+            border-color: transparent;
         }
-        .app-card:focus .card-icon {
-            background-color: var(--icon-bg) !important;
-            color: var(--icon-color) !important;
-        }
-        .app-card:focus h3 {
-            color: var(--text-main) !important;
+        body.dark-mode .app-card:focus {
+            background-color: var(--card-bg);
         }
 
+        /* Active (按壓時) - 提高權重，確保一定顯示灰色 */
         .app-card:active {
             background-color: var(--icon-bg) !important;
             transform: scale(0.98);
@@ -127,20 +125,22 @@
             border: 1px solid #27272a;
             box-shadow: none;
         }
-        body.dark-mode .app-card:focus {
-            background-color: var(--card-bg) !important;
-        }
 
-        /* Search Input */
+        /* === 搜尋框樣式修正 (最終版) === */
         .search-input:focus {
             outline: none;
             background-color: #ffffff;
+            /* 淺色模式：40% 透明度白色 */
             box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4) !important;
         }
+        
         body.dark-mode .search-input:focus {
             background-color: #27272a;
             border-color: transparent;
-            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.5) !important; 
+            /* 深色模式：25% 透明度白色
+               這會產生一個非常低調、有質感、不鮮豔的灰色光環，
+               跟淺色模式的樣式一致，但完美融入深色背景 */
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25) !important; 
         }
 
         /* Toast */
@@ -353,8 +353,9 @@
                     const grid = document.createElement('div');
                     grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-4";
                     filteredItems.forEach(app => {
+                        // 加入 noopener noreferrer 增加安全性與穩定性
                         grid.innerHTML += `
-                            <a href="${app.url}" target="_blank"
+                            <a href="${app.url}" target="_blank" rel="noopener noreferrer"
                                class="app-card p-4 flex items-center gap-4 group cursor-pointer relative overflow-hidden">
                                 <div class="card-icon w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-[var(--icon-bg)] text-[var(--icon-color)] transition-all duration-300">
                                     <i class="${app.icon} text-lg"></i>
