@@ -2,27 +2,28 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
     <title>高科大 | 學生系統整合入口</title>
     
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#18181b" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
     <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E">
-    <link rel="manifest" href="manifest.json">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script> tailwind.config = { darkMode: 'class' } </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
         
-        /* 1. 隱藏捲軸 */
-        * { -ms-overflow-style: none !important; scrollbar-width: none !important; }
-        *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; background: transparent !important; }
+        * { -ms-overflow-style: none !important; scrollbar-width: none !important; -webkit-tap-highlight-color: transparent; }
+        *::-webkit-scrollbar { display: none !important; }
 
-        /* 2. 鎖定重整 (防止雙讀條) */
         html, body { 
             overscroll-behavior-y: none; 
             height: 100%; 
@@ -56,14 +57,10 @@
             background-color: var(--bg-body);
             color: var(--text-main);
             transition: background-color 0.3s ease, color 0.3s ease;
-            -webkit-tap-highlight-color: transparent;
         }
-        
-        /* 動畫層配置 */
-        .hero-banner, header, main {
-            will-change: transform;
-            transform-origin: top center;
-        }
+
+        /* Hero & Header */
+        .hero-banner, header, main { will-change: transform; transform-origin: top center; }
         .bouncing { transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
         .hero-banner {
@@ -77,68 +74,39 @@
             background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
             border: 1px solid #312e81;
         }
-        .hero-shape {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.03);
-            pointer-events: none;
-        }
+        .hero-shape { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.03); pointer-events: none; }
 
         /* === App Card === */
         .app-card {
             background-color: var(--card-bg);
             border: 1px solid transparent;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
             border-radius: 12px;
             outline: none !important;
-            position: relative;
             transform: scale(1);
             transition: transform 0.1s ease;
         }
         
-        .app-card .card-icon, .app-card h3, .app-card .fa-chevron-right {
-            transition: color 0.1s, background-color 0.1s;
-        }
+        /* 視覺狀態重置 */
+        .app-card .card-icon, .app-card h3, .app-card .fa-chevron-right { transition: color 0.1s, background-color 0.1s; }
         .app-card .fa-chevron-right { color: var(--icon-color); opacity: 0.5; }
 
-        /* 防沾黏：強制重置所有原生狀態 */
-        .app-card:focus, .app-card:active, .app-card:focus-visible {
-            background-color: var(--card-bg) !important;
-            border-color: transparent !important;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
-            transform: none !important;
-        }
-        .app-card:focus .card-icon, .app-card:active .card-icon {
-            background-color: var(--icon-bg) !important; color: var(--icon-color) !important;
-        }
-        .app-card:focus h3, .app-card:active h3 { color: var(--text-main) !important; }
-        .app-card:focus .fa-chevron-right, .app-card:active .fa-chevron-right {
-            color: var(--icon-color) !important; opacity: 0.5 !important; transform: none !important;
-        }
-
-        /* JS 控制的變色狀態 */
+        /* JS 控制的按壓狀態 (Priority High) */
         .app-card.is-pressing {
             background-color: var(--icon-bg) !important;
             transform: scale(0.98) !important;
         }
         .app-card.is-pressing .card-icon {
-            background-color: var(--brand-accent) !important;
-            color: white !important;
+            background-color: var(--brand-accent) !important; color: white !important;
         }
         .app-card.is-pressing h3 { color: var(--brand-primary) !important; }
         .app-card.is-pressing .fa-chevron-right {
-            color: var(--brand-accent) !important;
-            opacity: 1 !important;
-            transform: translateX(2px) !important;
+            color: var(--brand-accent) !important; opacity: 1 !important; transform: translateX(2px) !important;
         }
 
-        /* 深色模式 */
         body.dark-mode .app-card { border: 1px solid #27272a; box-shadow: none; }
-        body.dark-mode .app-card:focus, body.dark-mode .app-card:active { background-color: var(--card-bg) !important; }
         body.dark-mode .app-card.is-pressing h3 { color: #60a5fa !important; }
-        body.dark-mode .app-card.is-pressing .fa-chevron-right { color: var(--brand-accent) !important; }
 
-        /* Hover (僅電腦) */
         @media (hover: hover) {
             .app-card:hover {
                 transform: translateY(-2px); border-color: var(--brand-accent);
@@ -146,40 +114,27 @@
             }
             .app-card:hover .card-icon { background-color: var(--brand-accent); color: white; }
             .app-card:hover h3 { color: var(--brand-primary); }
-            .app-card:hover .fa-chevron-right { color: var(--brand-accent); transform: translateX(2px); opacity: 1; }
+            .app-card:hover .fa-chevron-right { color: var(--brand-accent); opacity: 1; }
             body.dark-mode .app-card:hover h3 { color: #60a5fa; }
         }
 
-        /* 搜尋框與按鈕 */
-        .search-input { transition: background-color 0.3s, color 0.3s; }
-        .search-input:focus, button:focus {
-            outline: none; background-color: #ffffff;
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4) !important;
-        }
-        body.dark-mode .search-input {
-            background-color: #18181b !important; color: white !important; border: 1px solid #27272a;
-        }
-        body.dark-mode .search-input::placeholder { color: #71717a !important; }
-        body.dark-mode .search-input:focus, body.dark-mode button:focus {
-            background-color: #27272a !important; border-color: transparent;
-            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.5) !important; 
-        }
-        button { border-radius: 9999px; }
-
+        /* UI Components */
+        .search-input:focus, button:focus { outline: none; }
+        body.dark-mode .search-input { background-color: #18181b !important; color: white !important; border: 1px solid #27272a; }
+        
         #theme-toast {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
             background: rgba(0,0,0,0.8); color: white; padding: 8px 16px;
-            border-radius: 20px; font-size: 13px; font-weight: 300; letter-spacing: 0.5px;
-            opacity: 0; transition: all 0.3s ease; z-index: 100; backdrop-filter: blur(4px);
+            border-radius: 20px; font-size: 13px; opacity: 0; transition: all 0.3s ease; z-index: 100; backdrop-filter: blur(4px);
         }
         #theme-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         
         .animate-card { opacity: 0; animation: fadeUp 0.5s ease-out forwards; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-
-        header { border: 0 !important; border-bottom: 0 !important; box-shadow: none !important; }
-        .footer-line { border-top: 1px solid rgba(0, 0, 0, 0.05); }
-        body.dark-mode .footer-line { border-top: 1px solid rgba(255, 255, 255, 0.05); }
+        
+        header { border: 0 !important; box-shadow: none !important; }
+        .footer-line { border-top: 1px solid rgba(0,0,0,0.05); }
+        body.dark-mode .footer-line { border-top: 1px solid rgba(255,255,255,0.05); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -188,15 +143,14 @@
         <div class="max-w-3xl mx-auto px-5 py-3 flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <div class="w-14 h-14 rounded-2xl bg-[#002d72] dark:bg-[#d97706] flex items-center justify-center shadow-md flex-shrink-0 relative overflow-hidden group transition-colors duration-300">
-                    <div class="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <i class="fa-solid fa-graduation-cap text-3xl text-white drop-shadow-sm transform group-hover:scale-110 transition-transform duration-300"></i>
+                    <i class="fa-solid fa-graduation-cap text-3xl text-white drop-shadow-sm"></i>
                 </div>
                 <div class="leading-tight flex flex-col justify-center">
                     <h1 class="font-bold text-lg sm:text-xl tracking-wide text-[var(--text-main)]">國立高雄科技大學</h1>
                     <p class="text-xs text-[var(--text-sub)] font-medium mt-0.5">學生系統整合入口</p>
                 </div>
             </div>
-            <button onclick="toggleThemeMode(this)" class="w-10 h-10 rounded-full hover:bg-[var(--icon-bg)] flex items-center justify-center text-[var(--text-sub)] transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700 relative group">
+            <button onclick="toggleThemeMode(this)" class="w-10 h-10 rounded-full hover:bg-[var(--icon-bg)] flex items-center justify-center text-[var(--text-sub)] transition-colors border border-transparent">
                 <i id="themeIcon" class="fa-solid fa-circle-half-stroke text-lg"></i>
             </button>
         </div>
@@ -218,10 +172,7 @@
                 <div class="w-full sm:w-64 relative mt-2 sm:mt-0">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-main)] text-sm z-10"></i>
                     <input type="text" id="searchInput" placeholder="快速搜尋..." 
-                           class="search-input w-full pl-9 pr-8 py-2.5 rounded-lg text-sm border-0 
-                                  bg-white text-[var(--text-main)] placeholder-[var(--text-main)] placeholder-opacity-70
-                                  shadow-lg shadow-black/5 transition-all opacity-100
-                                  dark:bg-[#18181b] dark:text-white dark:placeholder-gray-500"
+                           class="search-input w-full pl-9 pr-8 py-2.5 rounded-lg text-sm border-0 bg-white text-[var(--text-main)] shadow-lg shadow-black/5"
                            autocomplete="off">
                     <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-sub)] hover:text-red-500 p-1 z-20">
                         <i class="fa-solid fa-xmark"></i>
@@ -233,27 +184,28 @@
         <div id="appContainer" class="space-y-8"></div>
         
         <div id="noResults" class="hidden flex flex-col items-center justify-center py-12 text-[var(--text-sub)]">
-            <div class="w-16 h-16 bg-[var(--icon-bg)] rounded-full flex items-center justify-center mb-3">
-                <i class="fa-solid fa-magnifying-glass text-xl opacity-30"></i>
-            </div>
+            <i class="fa-solid fa-magnifying-glass text-4xl opacity-20 mb-3"></i>
             <p class="text-sm opacity-80">找不到相關系統</p>
             <button onclick="clearSearch()" class="mt-2 text-[var(--brand-primary)] text-sm hover:underline">清除搜尋</button>
         </div>
     </main>
 
     <footer class="footer-line py-8 mt-auto text-center">
-        <p class="text-xs text-[var(--text-sub)] opacity-60">&copy; 2025 NKUST Student Portal | 非官方校務整合平台</p>
+        <p class="text-xs text-[var(--text-sub)] opacity-60">&copy; 2025 NKUST Student Portal</p>
     </footer>
     <div id="theme-toast">已切換模式</div>
 
     <script>
-        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
-            window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
+        // 註冊 Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW Registered!', reg.scope))
+                    .catch(err => console.log('SW Failed:', err));
+            });
         }
 
-        const iconBlue = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
-        const iconAmber = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23d97706'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
-
+        // ===== 完整資料庫 (依據原始順序) =====
         const categories = [
             {
                 id: "academic", title: "教務與課程",
@@ -287,21 +239,80 @@
             }
         ];
 
-        const searchInput = document.getElementById('searchInput');
-        const clearBtn = document.getElementById('clearSearchBtn');
-        const appContainer = document.getElementById('appContainer');
-        const noResults = document.getElementById('noResults');
+        // ===== 核心修復：防止返回沾黏 =====
+        function forceCleanup() {
+            // 1. 移除所有卡片按壓狀態
+            document.querySelectorAll('.app-card').forEach(card => card.classList.remove('is-pressing'));
+            
+            // 2. 移除焦點 (避免鍵盤跳出，排除輸入框)
+            if (document.activeElement && document.activeElement.tagName !== 'INPUT') {
+                document.activeElement.blur();
+            }
 
-        searchInput.addEventListener('focus', () => history.pushState({ search: true }, "", "#search"));
-        searchInput.addEventListener('keyup', (e) => {
-            const term = e.target.value.trim();
-            renderCategories(term);
-            if(term) clearBtn.classList.remove('hidden');
-            else clearBtn.classList.add('hidden');
+            // 3. 延遲雙重保險 (針對 iOS Safari BFCache)
+            setTimeout(() => {
+                document.querySelectorAll('.app-card').forEach(card => card.classList.remove('is-pressing'));
+                if (document.activeElement && document.activeElement.tagName !== 'INPUT') {
+                    document.activeElement.blur();
+                }
+            }, 50);
+        }
+
+        // 監聽頁面顯示 (包含上一頁回來)
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) forceCleanup(); // 從 Cache 恢復
+            else forceCleanup(); // 一般載入
+        });
+        
+        // 頁面可見性改變時也檢查
+        document.addEventListener('visibilitychange', () => {
+             if (document.visibilityState === 'visible') forceCleanup();
         });
 
-        window.addEventListener('popstate', (event) => {
-            if (window.location.hash !== "#search") searchInput.blur();
+        // ===== 觸控邏輯 =====
+        let currentActiveCard = null;
+        let isScrolling = false;
+        let touchStartY = 0;
+        const container = document.getElementById('appContainer');
+
+        if(container) {
+            container.addEventListener('touchstart', (e) => {
+                isScrolling = false;
+                touchStartY = e.touches[0].clientY;
+                const card = e.target.closest('.app-card');
+                if (card) {
+                    currentActiveCard = card;
+                    card.classList.add('is-pressing');
+                }
+            }, { passive: true });
+
+            container.addEventListener('touchmove', (e) => {
+                if (Math.abs(e.touches[0].clientY - touchStartY) > 10) {
+                    isScrolling = true;
+                    if(currentActiveCard) {
+                        currentActiveCard.classList.remove('is-pressing');
+                        currentActiveCard = null;
+                    }
+                }
+            }, { passive: true });
+
+            container.addEventListener('touchend', () => {
+                if(isScrolling && currentActiveCard) {
+                    currentActiveCard.classList.remove('is-pressing');
+                }
+            }, { passive: true });
+
+            container.addEventListener('touchcancel', forceCleanup, { passive: true });
+        }
+
+        // 搜尋與渲染
+        const searchInput = document.getElementById('searchInput');
+        const clearBtn = document.getElementById('clearSearchBtn');
+        const noResults = document.getElementById('noResults');
+
+        searchInput.addEventListener('keyup', (e) => {
+            renderCategories(e.target.value.trim());
+            clearBtn.classList.toggle('hidden', !e.target.value.trim());
         });
 
         function clearSearch() {
@@ -311,263 +322,81 @@
             searchInput.focus();
         }
 
-        // ===== 橡皮筋回彈 (Elastic Bounce) =====
-        let pullStartY = 0;
-        let isPulling = false;
-        let animationFrameId = null;
-        const mainElement = document.querySelector('main');
-        const headerElement = document.querySelector('header');
-        const welcomeBanner = document.getElementById('welcomeBanner');
-        const MAX_PULL = 150; 
-
-        window.addEventListener('touchstart', (e) => {
-            if (window.scrollY === 0) {
-                pullStartY = e.touches[0].clientY;
-            }
-        }, { passive: true });
-
-        window.addEventListener('touchmove', (e) => {
-            if (window.scrollY === 0) {
-                const currentY = e.touches[0].clientY;
-                const pullDistance = currentY - pullStartY;
-                
-                if (pullDistance > 0) {
-                    if (e.cancelable) e.preventDefault(); 
-                    isPulling = true;
-                    
-                    if (!animationFrameId) {
-                        animationFrameId = requestAnimationFrame(() => {
-                            const resistance = 0.4 * (1 - Math.min(pullDistance, 600) / 1200);
-                            const move = Math.min(pullDistance * resistance, MAX_PULL);
-                            
-                            const scaleY = 1 + (move / 800);
-                            const scaleX = 1 - (move / 2000);
-                            
-                            headerElement.style.transform = `translate3d(0, ${move}px, 0) scale(${scaleX}, ${scaleY})`;
-                            mainElement.style.transform = `translate3d(0, ${move}px, 0)`;
-                            welcomeBanner.style.transform = `scale(${1 + move/1000})`;
-                            welcomeBanner.style.transformOrigin = 'top center';
-                            
-                            animationFrameId = null;
-                        });
-                    }
-                }
-            }
-        }, { passive: false });
-
-        window.addEventListener('touchend', () => {
-            if (isPulling) {
-                isPulling = false;
-                headerElement.classList.add('bouncing');
-                mainElement.classList.add('bouncing');
-                welcomeBanner.classList.add('bouncing');
-                
-                headerElement.style.transform = '';
-                mainElement.style.transform = '';
-                welcomeBanner.style.transform = '';
-                
-                setTimeout(() => {
-                    headerElement.classList.remove('bouncing');
-                    mainElement.classList.remove('bouncing');
-                    welcomeBanner.classList.remove('bouncing');
-                }, 500); 
-            }
-        });
-
-        // ===== 觸控與點擊管理 =====
-        let currentActiveCard = null;
-        let isScrolling = false;
-        let touchStartY_Scroll = 0;
-
-        function clearAllActiveStates() {
-            document.querySelectorAll('.app-card').forEach(card => card.classList.remove('is-pressing'));
-            currentActiveCard = null;
-        }
-
-        function attachTouchHandlers() {
-            const container = document.getElementById('appContainer');
-            
-            container.addEventListener('touchstart', function(e) {
-                isScrolling = false;
-                touchStartY_Scroll = e.touches[0].clientY;
-                const card = e.target.closest('.app-card');
-                if (card) {
-                    currentActiveCard = card;
-                    card.classList.add('is-pressing');
-                }
-            }, { passive: true });
-
-            container.addEventListener('touchmove', function(e) {
-                if (Math.abs(e.touches[0].clientY - touchStartY_Scroll) > 10) {
-                    isScrolling = true;
-                    clearAllActiveStates();
-                }
-            }, { passive: true });
-
-            container.addEventListener('touchend', function() {
-                if (!isScrolling && currentActiveCard) {
-                    // 不自動清除，等待 click 事件處理，確保視覺回饋
-                } else {
-                    clearAllActiveStates();
-                }
-                isScrolling = false;
-            }, { passive: true });
-            
-            container.addEventListener('touchcancel', clearAllActiveStates, { passive: true });
-        }
-
-        // 強制大掃除 (修復返回沾黏)
-        function forceCleanup() {
-            // 同步執行，確保在跳轉前生效
-            clearAllActiveStates();
-            if (document.activeElement) document.activeElement.blur();
-            document.querySelectorAll('.app-card').forEach(el => el.blur());
-        }
-        
-        window.addEventListener('pageshow', forceCleanup);
-        window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') forceCleanup(); });
-        window.addEventListener('blur', forceCleanup);
-        window.addEventListener('focus', forceCleanup);
-
         function renderCategories(filterText = "") {
+            const appContainer = document.getElementById('appContainer');
             appContainer.innerHTML = '';
             let hasResults = false;
-            let delayCounter = 2;
+            let delay = 1;
 
             categories.forEach(cat => {
-                const filteredItems = cat.items.filter(item => 
-                    (item.name + item.desc).toLowerCase().includes(filterText.toLowerCase())
-                );
-
-                if (filteredItems.length > 0) {
+                const filtered = cat.items.filter(item => (item.name + item.desc).toLowerCase().includes(filterText.toLowerCase()));
+                if (filtered.length > 0) {
                     hasResults = true;
                     const section = document.createElement('div');
                     section.className = "animate-card";
-                    section.style.animationDelay = `${delayCounter * 0.1}s`;
-                    delayCounter++;
+                    section.style.animationDelay = `${delay++ * 0.05}s`;
                     
-                    section.innerHTML = `
-                        <div class="flex items-center gap-3 mb-4">
-                            <span class="w-1 h-5 rounded-full bg-[var(--brand-accent)] opacity-80 transition-colors duration-300"></span>
-                            <h2 class="text-sm font-bold text-[var(--text-sub)] uppercase tracking-wider">${cat.title}</h2>
-                        </div>
-                    `;
+                    section.innerHTML = `<div class="flex items-center gap-3 mb-4"><span class="w-1 h-5 rounded-full bg-[var(--brand-accent)] opacity-80"></span><h2 class="text-sm font-bold text-[var(--text-sub)] uppercase tracking-wider">${cat.title}</h2></div>`;
                     
                     const grid = document.createElement('div');
                     grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-4";
-                    filteredItems.forEach(app => {
-                        const cardLink = document.createElement('a');
-                        cardLink.href = app.url;
-                        cardLink.target = "_blank";
-                        cardLink.rel = "noopener noreferrer";
-                        cardLink.className = "app-card p-4 flex items-center gap-4 group cursor-pointer relative overflow-hidden";
-                        
-                        // 解決沾黏：點擊當下，同步強制復原
-                        cardLink.addEventListener('click', function() {
-                            forceCleanup();
-                        });
-
-                        cardLink.innerHTML = `
-                            <div class="card-icon w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-[var(--icon-bg)] text-[var(--icon-color)] transition-all duration-300">
-                                <i class="${app.icon} text-lg"></i>
-                            </div>
-                            <div class="flex-grow min-w-0">
-                                <h3 class="font-bold text-[var(--text-main)] text-[15px] transition-colors">${app.name}</h3>
-                                <p class="text-xs text-[var(--text-sub)] mt-1 truncate">${app.desc}</p>
-                            </div>
-                            <div class="transition-all">
-                                <i class="fa-solid fa-chevron-right text-xs"></i>
-                            </div>
+                    filtered.forEach(app => {
+                        const a = document.createElement('a');
+                        a.href = app.url;
+                        a.target = "_blank";
+                        a.rel = "noopener noreferrer";
+                        a.className = "app-card p-4 flex items-center gap-4 cursor-pointer relative overflow-hidden";
+                        a.onclick = () => {
+                             // 點擊後稍微延遲清理，讓動畫跑一下，但主要依賴 pageshow
+                             setTimeout(forceCleanup, 500);
+                        };
+                        a.innerHTML = `
+                            <div class="card-icon w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-[var(--icon-bg)] text-[var(--icon-color)]"><i class="${app.icon} text-lg"></i></div>
+                            <div class="flex-grow min-w-0"><h3 class="font-bold text-[var(--text-main)] text-[15px]">${app.name}</h3><p class="text-xs text-[var(--text-sub)] mt-1 truncate">${app.desc}</p></div>
+                            <i class="fa-solid fa-chevron-right text-xs"></i>
                         `;
-                        grid.appendChild(cardLink);
+                        grid.appendChild(a);
                     });
                     section.appendChild(grid);
                     appContainer.appendChild(section);
                 }
             });
-
-            if (!hasResults) noResults.classList.remove('hidden');
-            else noResults.classList.add('hidden');
-            
-            attachTouchHandlers();
+            noResults.classList.toggle('hidden', hasResults);
         }
 
+        // 主題控制
         let currentMode = localStorage.getItem('theme_mode') || 'auto';
-        function initTheme() { applyTheme(currentMode); }
-
+        function initTheme() { applyTheme(currentMode); updateGreeting(); }
         function applyTheme(mode) {
-            let isDark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            const isDark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
             document.body.classList.toggle('dark-mode', isDark);
-            document.documentElement.classList.toggle('dark', isDark);
+            document.getElementById('themeIcon').className = mode === 'auto' ? 'fa-solid fa-circle-half-stroke text-lg' : (mode === 'light' ? 'fa-solid fa-sun text-lg' : 'fa-solid fa-moon text-lg');
             
-            const link = document.querySelector("link[rel~='icon']");
-            if(link) link.href = isDark ? iconAmber : iconBlue;
-            
-            const icon = document.getElementById('themeIcon');
-            if (mode === 'light') icon.className = 'fa-solid fa-sun text-lg';
-            else if (mode === 'dark') icon.className = 'fa-solid fa-moon text-lg';
-            else icon.className = 'fa-solid fa-circle-half-stroke text-lg';
-            
-            updateGreeting(isDark);
+            // Icon 更新
+            const link = document.getElementById('dynamic-favicon');
+            // 注意：這裡我用你原始的 svg 設定，確保深淺模式切換正常
+            if(link) link.href = isDark ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23d97706'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E" : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
         }
-
-        function toggleThemeMode(btn) {
+        function toggleThemeMode() {
             const modes = ['light', 'dark', 'auto'];
-            const texts = ['已切換至淺色模式', '已切換至深色模式', '已切換至自動跟隨模式'];
-            const currentIndex = modes.indexOf(currentMode);
-            const nextIndex = (currentIndex + 1) % 3;
-            
-            currentMode = modes[nextIndex];
+            currentMode = modes[(modes.indexOf(currentMode) + 1) % 3];
             localStorage.setItem('theme_mode', currentMode);
             applyTheme(currentMode);
-            showToast(texts[nextIndex]);
-            
-            if (btn) btn.blur();
-        }
-
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-            if (currentMode === 'auto') applyTheme('auto');
-        });
-
-        function showToast(text) {
             const toast = document.getElementById('theme-toast');
-            toast.textContent = text;
+            toast.textContent = `已切換至 ${currentMode === 'auto' ? '自動' : (currentMode === 'light' ? '淺色' : '深色')}模式`;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2000);
         }
-
-        function updateGreeting(isDark) {
+        function updateGreeting() {
             const h = new Date().getHours();
-            const textEl = document.getElementById('greetingText');
-            const iconEl = document.getElementById('greetingIcon');
-            const containerEl = document.getElementById('greetingContainer');
-            
-            containerEl.className = "flex items-center gap-2 mb-1";
-            if (h >= 5 && h < 12) {
-                textEl.textContent = "早安，同學";
-                iconEl.className = "fa-regular fa-sun";
-                // 淺色模式維持高對比黃色，深色模式維持黃色
-                containerEl.className = `flex items-center gap-2 mb-1 ${isDark ? 'text-yellow-400' : 'text-yellow-300'}`;
-            } else if (h >= 12 && h < 18) {
-                textEl.textContent = "午安，同學";
-                iconEl.className = "fa-solid fa-sun";
-                // 修正：淺色模式用黃色，深色模式用橘色
-                containerEl.className = `flex items-center gap-2 mb-1 ${isDark ? 'text-orange-400' : 'text-yellow-300'}`;
-            } else {
-                textEl.textContent = "晚安，同學";
-                iconEl.className = "fa-solid fa-moon";
-                containerEl.className = `flex items-center gap-2 mb-1 ${isDark ? 'text-yellow-400' : 'text-yellow-300'}`;
-            }
+            const t = h < 12 ? "早安" : (h < 18 ? "午安" : "晚安");
+            const i = h < 12 ? "fa-regular fa-sun" : (h < 18 ? "fa-solid fa-sun" : "fa-solid fa-moon");
+            document.getElementById('greetingText').textContent = `${t}，同學`;
+            document.getElementById('greetingIcon').className = i;
+            document.getElementById('greetingContainer').className = `flex items-center gap-2 mb-1 text-yellow-500`;
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initTheme();
-            renderCategories();
-        });
-        
-        document.addEventListener("visibilitychange", () => {
-           if (document.visibilityState === 'visible') applyTheme(currentMode);
-        });
+        document.addEventListener('DOMContentLoaded', () => { renderCategories(); initTheme(); });
     </script>
 </body>
 </html>
