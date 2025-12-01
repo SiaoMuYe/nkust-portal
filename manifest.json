@@ -5,8 +5,10 @@
     "start_url": "./",
     "scope": "./",
     "display": "standalone",
-    "background_color": "#f8fafc",
-    "theme_color": "#002d72",
+    
+    "background_color": "#09090b", 
+    "theme_color": "#18181b",      
+    
     "orientation": "portrait-primary",
     "categories": ["education", "productivity"],
     "lang": "zh-TW",
