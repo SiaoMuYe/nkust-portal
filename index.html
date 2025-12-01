@@ -22,21 +22,15 @@
         * { -ms-overflow-style: none !important; scrollbar-width: none !important; }
         *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; background: transparent !important; }
 
-        /* 2. 鎖定原生重整 (但允許 JS 實作回彈) */
+        /* 2. 鎖定重整 (交給 JS 處理回彈) */
         html, body { 
             overscroll-behavior-y: none; 
             height: 100%; 
             overflow-y: auto; 
+            /* 禁止選取文字，讓 APP 感更強 */
+            -webkit-user-select: none;
+            user-select: none;
         }
-
-        /* 3. iOS 回彈動畫樣式 */
-        #welcomeBanner, main, header {
-            will-change: transform;
-            transform: translateZ(0);
-            backface-visibility: hidden;
-        }
-        .pulling { transition: none !important; }
-        .bouncing { transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
 
         :root {
             --brand-primary: #002d72;   
@@ -66,6 +60,13 @@
             -webkit-tap-highlight-color: transparent;
         }
         
+        /* 動畫層 */
+        .hero-banner, #appContainer {
+            will-change: transform;
+            transform: translate3d(0,0,0);
+        }
+        .bouncing { transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+
         .hero-banner {
             background: linear-gradient(135deg, #002d72 0%, #1e3a8a 100%);
             color: white;
@@ -84,34 +85,25 @@
             pointer-events: none;
         }
 
-        /* === App Card (JS 接管狀態) === */
+        /* === App Card (JS 控制 class .is-pressing) === */
         .app-card {
             background-color: var(--card-bg);
             border: 1px solid transparent;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
             border-radius: 12px;
             outline: none !important;
-            user-select: none;
             position: relative;
             transform: scale(1);
             transition: transform 0.1s ease;
         }
         
-        .app-card .card-icon,
-        .app-card h3,
-        .app-card .fa-chevron-right {
-            transition: color 0.1s, background-color 0.1s, opacity 0.1s, transform 0.1s;
+        .app-card .card-icon, .app-card h3, .app-card .fa-chevron-right {
+            transition: color 0.1s, background-color 0.1s;
         }
+        .app-card .fa-chevron-right { color: var(--icon-color); opacity: 0.5; }
 
-        .app-card .fa-chevron-right {
-            color: var(--icon-color);
-            opacity: 0.5;
-        }
-
-        /* 禁用 CSS 原生 Focus/Active 視覺 (防沾黏) */
-        .app-card:focus, 
-        .app-card:active,
-        .app-card:focus-visible {
+        /* 1. 禁用所有原生 Focus/Active 樣式 (防沾黏核心) */
+        .app-card:focus, .app-card:active, .app-card:focus-visible {
             background-color: var(--card-bg) !important;
             border-color: transparent !important;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
@@ -121,38 +113,12 @@
             background-color: var(--icon-bg) !important;
             color: var(--icon-color) !important;
         }
-        .app-card:focus h3, .app-card:active h3 {
-            color: var(--text-main) !important;
-        }
+        .app-card:focus h3, .app-card:active h3 { color: var(--text-main) !important; }
         .app-card:focus .fa-chevron-right, .app-card:active .fa-chevron-right {
-            color: var(--icon-color) !important;
-            opacity: 0.5 !important;
-            transform: none !important;
+            color: var(--icon-color) !important; opacity: 0.5 !important; transform: none !important;
         }
 
-        /* Hover (僅電腦) */
-        @media (hover: hover) {
-            .app-card:hover {
-                transform: translateY(-2px);
-                border-color: var(--brand-accent);
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            }
-            .app-card:hover .card-icon {
-                background-color: var(--brand-accent);
-                color: white;
-            }
-            .app-card:hover h3 {
-                color: var(--brand-primary);
-            }
-            .app-card:hover .fa-chevron-right {
-                color: var(--brand-accent);
-                transform: translateX(2px);
-                opacity: 1;
-            }
-            body.dark-mode .app-card:hover h3 { color: #60a5fa; }
-        }
-
-        /* 點擊狀態 (.is-pressing) */
+        /* 2. 真正變色狀態 (只認 .is-pressing) */
         .app-card.is-pressing {
             background-color: var(--icon-bg) !important;
             transform: scale(0.98) !important;
@@ -161,9 +127,7 @@
             background-color: var(--brand-accent) !important;
             color: white !important;
         }
-        .app-card.is-pressing h3 {
-            color: var(--brand-primary) !important;
-        }
+        .app-card.is-pressing h3 { color: var(--brand-primary) !important; }
         .app-card.is-pressing .fa-chevron-right {
             color: var(--brand-accent) !important;
             opacity: 1 !important;
@@ -178,27 +142,39 @@
         body.dark-mode .app-card.is-pressing h3 { color: #60a5fa !important; }
         body.dark-mode .app-card.is-pressing .fa-chevron-right { color: var(--brand-accent) !important; }
 
-        /* 搜尋框與按鈕 */
+        /* Hover (僅電腦) */
+        @media (hover: hover) {
+            .app-card:hover {
+                transform: translateY(-2px);
+                border-color: var(--brand-accent);
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            }
+            .app-card:hover .card-icon { background-color: var(--brand-accent); color: white; }
+            .app-card:hover h3 { color: var(--brand-primary); }
+            .app-card:hover .fa-chevron-right {
+                color: var(--brand-accent); transform: translateX(2px); opacity: 1;
+            }
+            body.dark-mode .app-card:hover h3 { color: #60a5fa; }
+        }
+
+        /* === 搜尋框與按鈕 === */
+        .search-input { transition: background-color 0.3s, color 0.3s; }
         .search-input:focus, button:focus {
             outline: none;
             background-color: #ffffff;
             box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4) !important;
         }
-        
         body.dark-mode .search-input {
             background-color: #18181b !important;
             color: white !important;
             border: 1px solid #27272a;
         }
         body.dark-mode .search-input::placeholder { color: #71717a !important; }
-        
-        body.dark-mode .search-input:focus, 
-        body.dark-mode button:focus {
+        body.dark-mode .search-input:focus, body.dark-mode button:focus {
             background-color: #27272a !important;
             border-color: transparent;
             box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.5) !important; 
         }
-        
         button { border-radius: 9999px; }
 
         /* Toast */
@@ -256,8 +232,7 @@
                     <input type="text" id="searchInput" placeholder="快速搜尋..." 
                            class="search-input w-full pl-9 pr-8 py-2.5 rounded-lg text-sm border-0 
                                   bg-white text-[var(--text-main)] placeholder-[var(--text-main)] placeholder-opacity-70
-                                  shadow-lg shadow-black/5 transition-all opacity-100
-                                  dark:bg-[#18181b] dark:text-white dark:placeholder-gray-500"
+                                  shadow-lg shadow-black/5 transition-all opacity-100"
                            autocomplete="off">
                     <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-sub)] hover:text-red-500 p-1 z-20">
                         <i class="fa-solid fa-xmark"></i>
@@ -287,7 +262,6 @@
             window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
         }
 
-        // SVG - 完整字串，確保 JS 不會出錯
         const iconBlue = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
         const iconAmber = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23d97706'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
 
@@ -348,120 +322,80 @@
             searchInput.focus();
         }
 
-        // ===== iOS 回彈特效 (重新加入) =====
+        // ===== Smooth Pull-to-Refresh (iOS Style) =====
+        // 使用 passive: false 以便阻止原生滾動，實現順滑回彈
         let pullStartY = 0;
         let isPulling = false;
-        let currentPull = 0;
         let animationFrameId = null;
         const mainElement = document.querySelector('main');
         const headerElement = document.querySelector('header');
         const welcomeBanner = document.getElementById('welcomeBanner');
-        const MAX_PULL = 100;
-        
-        function applyPullEffect(pullDistance) {
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            animationFrameId = requestAnimationFrame(() => {
-                const damping = 0.4;
-                const resistance = Math.pow(pullDistance / MAX_PULL, 0.7);
-                const actualPull = pullDistance * damping * (1 - resistance);
-                currentPull = Math.max(0, Math.min(actualPull, MAX_PULL));
-                const scaleY = 1 + (currentPull / 400);
-                const scaleX = 1 - (currentPull / 2000);
-                const bannerScale = 1 + (currentPull / 600);
+        const MAX_PULL = 120; // 最大拉伸距離
+
+        window.addEventListener('touchstart', (e) => {
+            if (window.scrollY === 0) {
+                pullStartY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            if (window.scrollY === 0) {
+                const currentY = e.touches[0].clientY;
+                const pullDistance = currentY - pullStartY;
                 
-                headerElement.style.transform = `translate3d(0, ${currentPull}px, 0) scale(${scaleX}, ${scaleY})`;
-                mainElement.style.transform = `translate3d(0, ${currentPull}px, 0)`;
-                welcomeBanner.style.transform = `translate3d(0, 0, 0) scale(${bannerScale})`;
-                welcomeBanner.style.transformOrigin = 'top center';
-                animationFrameId = null;
-            });
-        }
-        
-        function releasePullEffect() {
-            if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
-            headerElement.classList.add('bouncing');
-            mainElement.classList.add('bouncing');
-            welcomeBanner.classList.add('bouncing');
-            headerElement.style.transform = 'translate3d(0, 0, 0) scale(1, 1)';
-            mainElement.style.transform = 'translate3d(0, 0, 0)';
-            welcomeBanner.style.transform = 'translate3d(0, 0, 0) scale(1)';
-            setTimeout(() => {
-                headerElement.classList.remove('bouncing', 'pulling');
-                mainElement.classList.remove('bouncing', 'pulling');
-                welcomeBanner.classList.remove('bouncing', 'pulling');
+                if (pullDistance > 0) {
+                    // 阻止瀏覽器預設行為 (解決雙讀條與抖動)
+                    if (e.cancelable) e.preventDefault();
+                    
+                    isPulling = true;
+                    // 使用 requestAnimationFrame 更新動畫
+                    if (!animationFrameId) {
+                        animationFrameId = requestAnimationFrame(() => {
+                            // 阻尼效果：拉得越長越難拉
+                            const resistance = 0.4 * (1 - Math.min(pullDistance, 400) / 800);
+                            const move = Math.min(pullDistance * resistance, MAX_PULL);
+                            const scale = 1 + (move / 1000);
+                            
+                            headerElement.style.transform = `translate3d(0, ${move}px, 0)`;
+                            mainElement.style.transform = `translate3d(0, ${move}px, 0)`;
+                            welcomeBanner.style.transform = `scale(${scale})`;
+                            welcomeBanner.style.transformOrigin = 'top center';
+                            
+                            animationFrameId = null;
+                        });
+                    }
+                }
+            }
+        }, { passive: false }); // 關鍵：使用 passive: false 才能 preventDefault
+
+        window.addEventListener('touchend', () => {
+            if (isPulling) {
+                isPulling = false;
+                // 回彈動畫
+                headerElement.classList.add('bouncing');
+                mainElement.classList.add('bouncing');
+                welcomeBanner.classList.add('bouncing');
+                
                 headerElement.style.transform = '';
                 mainElement.style.transform = '';
                 welcomeBanner.style.transform = '';
-                welcomeBanner.style.transformOrigin = '';
-                currentPull = 0;
-            }, 400);
-        }
-        
-        window.addEventListener('touchstart', (e) => {
-            const scrollY = window.scrollY || window.pageYOffset;
-            if (scrollY <= 5) {
-                isPulling = true;
-                pullStartY = e.touches[0].clientY;
-                headerElement.classList.add('pulling');
-                mainElement.classList.add('pulling');
-                welcomeBanner.classList.add('pulling');
+                
+                setTimeout(() => {
+                    headerElement.classList.remove('bouncing');
+                    mainElement.classList.remove('bouncing');
+                    welcomeBanner.classList.remove('bouncing');
+                }, 400);
             }
-        }, { passive: true });
-        
-        window.addEventListener('touchmove', (e) => {
-            if (!isPulling) return;
-            const scrollY = window.scrollY || window.pageYOffset;
-            if (scrollY <= 5) {
-                const currentY = e.touches[0].clientY;
-                const pullDistance = currentY - pullStartY;
-                if (pullDistance > 0) applyPullEffect(pullDistance);
-            } else if (currentPull > 0) {
-                isPulling = false;
-                releasePullEffect();
-            }
-        }, { passive: true });
-        
-        window.addEventListener('touchend', () => {
-            if (isPulling && currentPull > 0) releasePullEffect();
-            isPulling = false;
-        }, { passive: true });
-        
-        window.addEventListener('touchcancel', () => {
-            if (isPulling && currentPull > 0) releasePullEffect();
-            isPulling = false;
-        }, { passive: true });
+        });
 
         // ===== 觸控事件處理 (解決沾黏 + 快速滑動優化) =====
         let currentActiveCard = null;
         let isScrolling = false;
-        let touchStartY = 0;
-        let hasMovedVertically = false;
+        let touchStartY_Scroll = 0;
 
         function clearAllActiveStates() {
-            document.querySelectorAll('.app-card').forEach(card => {
-                card.classList.remove('is-pressing');
-            });
+            document.querySelectorAll('.app-card').forEach(card => card.classList.remove('is-pressing'));
             currentActiveCard = null;
-        }
-        
-        function setActiveCard(card) {
-            if (card !== currentActiveCard) {
-                if (currentActiveCard) {
-                    currentActiveCard.classList.remove('is-pressing');
-                }
-                if (card) {
-                    card.classList.add('is-pressing');
-                    currentActiveCard = card;
-                } else {
-                    currentActiveCard = null;
-                }
-            }
-        }
-
-        function getCardAtPoint(x, y) {
-            const element = document.elementFromPoint(x, y);
-            if (!element) return null;
-            return element.closest('.app-card');
         }
 
         function attachTouchHandlers() {
@@ -469,66 +403,43 @@
             
             container.addEventListener('touchstart', function(e) {
                 isScrolling = false;
-                hasMovedVertically = false;
-                touchStartY = e.touches[0].clientY;
-                
-                const touch = e.touches[0];
-                const card = getCardAtPoint(touch.clientX, touch.clientY);
-                if (card) setActiveCard(card);
+                touchStartY_Scroll = e.touches[0].clientY;
+                const card = e.target.closest('.app-card');
+                if (card) {
+                    currentActiveCard = card;
+                    card.classList.add('is-pressing');
+                }
             }, { passive: true });
 
             container.addEventListener('touchmove', function(e) {
-                if (isScrolling) return; // 優化：捲動時不計算
-
-                const touch = e.touches[0];
-                const moveY = Math.abs(touch.clientY - touchStartY);
-                
-                if (moveY > 10) { 
-                    hasMovedVertically = true;
+                if (Math.abs(e.touches[0].clientY - touchStartY_Scroll) > 10) {
                     isScrolling = true;
                     clearAllActiveStates();
-                    return;
-                }
-                
-                if (!hasMovedVertically) {
-                    const card = getCardAtPoint(touch.clientX, touch.clientY);
-                    if (card) setActiveCard(card);
-                    else if (!card && currentActiveCard) clearAllActiveStates();
                 }
             }, { passive: true });
 
-            container.addEventListener('touchend', function(e) {
+            container.addEventListener('touchend', function() {
+                // 手指離開時，如果不是在捲動，延遲一點點清除(視覺回饋)
                 if (!isScrolling && currentActiveCard) {
-                    setTimeout(clearAllActiveStates, 100);
+                    setTimeout(clearAllActiveStates, 150);
                 } else {
                     clearAllActiveStates();
                 }
-                isScrolling = false;
             }, { passive: true });
-
-            container.addEventListener('touchcancel', function() {
-                clearAllActiveStates();
-                isScrolling = false;
-            }, { passive: true });
+            
+            container.addEventListener('touchcancel', clearAllActiveStates, { passive: true });
         }
 
+        // 強制清除狀態 (解決返回沾黏)
         function forceCleanup() {
             setTimeout(() => {
                 clearAllActiveStates();
                 if (document.activeElement) document.activeElement.blur();
-                document.querySelectorAll('.app-card').forEach(el => {
-                    el.blur();
-                    el.classList.remove('is-pressing');
-                });
-            }, 50);
+            }, 10);
         }
         
         window.addEventListener('pageshow', forceCleanup);
-        window.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') forceCleanup();
-        });
-        window.addEventListener('blur', forceCleanup);
-        window.addEventListener('focus', forceCleanup);
+        window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') forceCleanup(); });
 
         function renderCategories(filterText = "") {
             appContainer.innerHTML = '';
@@ -557,6 +468,8 @@
                     const grid = document.createElement('div');
                     grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-4";
                     filteredItems.forEach(app => {
+                        // 在 click 事件中，立即執行 forceCleanup()
+                        // 這是確保瀏覽器在跳轉前的一瞬間拍下的快照是乾淨的
                         grid.innerHTML += `
                             <a href="${app.url}" target="_blank" rel="noopener noreferrer" 
                                onclick="forceCleanup()"
@@ -591,7 +504,6 @@
         function applyTheme(mode) {
             let isDark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
             document.body.classList.toggle('dark-mode', isDark);
-            document.documentElement.classList.toggle('dark', isDark);
             
             const link = document.querySelector("link[rel~='icon']");
             if(link) link.href = isDark ? iconAmber : iconBlue;
