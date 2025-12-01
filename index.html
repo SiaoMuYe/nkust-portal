@@ -64,10 +64,7 @@
             pointer-events: none;
         }
 
-        /* === APP CARD 狀態樣式修正 === 
-           目標：手機上絕不顯示橘色 (Hover)，返回時不要有顏色，按住時是灰色
-        */
-
+        /* === APP CARD 修正 === */
         .app-card {
             background-color: var(--card-bg);
             border: 1px solid transparent;
@@ -78,7 +75,7 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* 1. 只有滑鼠懸停時 (電腦版) 才會出現橘色框和橘色圖示 */
+        /* Hover: 僅限電腦滑鼠 */
         @media (hover: hover) {
             .app-card:hover {
                 transform: translateY(-2px);
@@ -89,17 +86,9 @@
                 background-color: var(--brand-accent);
                 color: white;
             }
-            .app-card:hover h3 {
-                color: var(--brand-primary);
-            }
-            body.dark-mode .app-card:hover h3 {
-                color: #60a5fa;
-            }
         }
 
-        /* 2. 手機版 Focus 狀態 (返回時) - 強制覆寫為「預設白色」
-           這樣就算瀏覽器認為它是 Focus，也看不出來，不會變成橘色 
-        */
+        /* Focus: 強制清除手機返回時的選取樣式 */
         .app-card:focus {
             background-color: var(--card-bg) !important;
             border-color: transparent !important;
@@ -112,30 +101,31 @@
             color: var(--text-main) !important;
         }
 
-        /* 3. 只有「手指按下去」的那一刻 (Active) 才是灰色 */
+        /* Active: 只有按住時變色 */
         .app-card:active {
             background-color: var(--icon-bg) !important;
             transform: scale(0.98);
         }
-        
-        /* 深色模式修正 */
+
         body.dark-mode .app-card {
             border: 1px solid #27272a;
             box-shadow: none;
         }
+        body.dark-mode .app-card:focus {
+            background-color: var(--card-bg) !important;
+        }
 
-        /* === 搜尋框樣式修正 ===
-           目標：淺色模式要有選取框 (Ring)
-        */
+        /* === 搜尋框樣式修正 (重點) === */
         .search-input:focus {
             outline: none;
             background-color: #ffffff;
-            /* 修正：加回藍色光暈，rgba透明度設為 0.2 */
-            box-shadow: 0 0 0 3px rgba(0, 45, 114, 0.2) !important; 
+            /* 修正：淺色模式下背景是深藍色，所以光暈要是白色才看得到 */
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4) !important;
         }
         body.dark-mode .search-input:focus {
             background-color: #27272a;
             border-color: var(--brand-accent);
+            /* 深色模式下背景是黑色，光暈維持主題色 */
             box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2) !important; 
         }
 
@@ -172,8 +162,10 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* 強制移除 Header 所有邊框 */
+        /* === Header 修正 (重點) === 
+           強制移除所有邊框和陰影，消除第二條線 */
         header {
+            border: 0 !important;
             border-bottom: 0 !important;
             box-shadow: none !important;
         }
@@ -317,7 +309,7 @@
             searchInput.focus();
         }
         
-        // 重點：頁面恢復顯示時，強制讓所有連結失焦並清除樣式
+        // 頁面恢復顯示時，強制讓所有連結失焦並清除樣式
         window.addEventListener('pageshow', (event) => {
             const activeElements = document.querySelectorAll('.app-card');
             activeElements.forEach(el => {
