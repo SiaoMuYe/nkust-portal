@@ -184,15 +184,129 @@
             <div class="w-16 h-16 bg-[var(--icon-bg)] rounded-full flex items-center justify-center mb-3">
                 <i class="fa-solid fa-magnifying-glass text-xl opacity-30"></i>
             </div>
-            <p class="text-sm opacity-80">找不到相關系統</p>
+            <p class="text-sm opacity-80 mb-6">找不到相關系統</p>
+            
+            <button onclick="clearSearchAndReturn()" 
+                class="px-4 py-2 bg-[var(--brand-primary)] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity dark:bg-blue-600 shadow-md">
+                <i class="fa-solid fa-arrow-left mr-2"></i>返回主頁
+            </button>
         </div>
-    </main>
+        </main>
+
 
     <footer class="border-t border-[var(--border-color)] py-8 mt-auto text-center">
         <p class="text-xs text-[var(--text-sub)] opacity-60">&copy; 2025 NKUST Student Portal | 非官方校務整合平台</p>
     </footer>
     <div id="theme-toast">已切換模式</div>
 
+    <script>
+        // 修正 Service Worker 註冊，確保只在支援的安全環境 (HTTPS/localhost) 下執行
+        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+            window.addEventListener('load', () => {
+                // 註冊 Service Worker
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker 註冊成功:', reg.scope))
+                    .catch(err => console.error('Service Worker 註冊失敗:', err));
+            });
+        }
+
+        // --- SVG Data URIs (Classic Solid Book Icon) ---
+        // Blue Book (Light Mode) - Scale corrected to 0.36
+        const iconBlue = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
+        // Amber Book (Dark Mode) - Scale corrected to 0.36
+        const iconAmber = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23d97706'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
+
+        function updateFavicon(isDark) {
+            const link = document.querySelector("link[rel~='icon']");
+            if(link) link.href = isDark ? iconAmber : iconBlue;
+        }
+
+        // === 主題核心邏輯：三段式切換 (Auto/Light/Dark) ===
+        let currentMode = 'auto';
+
+        function initTheme() {
+            const stored = localStorage.getItem('theme_mode');
+            if (stored) {
+                currentMode = stored;
+            } else {
+                currentMode = 'auto'; // 預設為自動跟隨系統
+            }
+            applyTheme(currentMode);
+            document.body.classList.remove('invisible');
+        }
+
+        function applyTheme(mode) {
+            let isDark = false;
+            if (mode === 'dark') {
+                isDark = true;
+            } else if (mode === 'light') {
+                isDark = false;
+            } else {
+                // Auto: 檢查系統
+                isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            }
+
+            if (isDark) {
+                document.body.classList.add('dark-mode');
+                document.documentElement.classList.add('dark');
+                updateFavicon(true);
+            } else {
+                document.body.classList.remove('dark-mode');
+                document.documentElement.classList.remove('dark');
+                updateFavicon(false);
+            }
+
+            const icon = document.getElementById('themeIcon');
+            if (mode === 'light') icon.className = 'fa-solid fa-sun text-lg';
+            else if (mode === 'dark') icon.className = 'fa-solid fa-moon text-lg';
+            else icon.className = 'fa-solid fa-circle-half-stroke text-lg';
+
+            updateGreeting(isDark);
+        }
+
+        function toggleThemeMode() {
+            let nextMode = 'light';
+            let toastText = "已切換至淺色模式";
+
+            if (currentMode === 'light') {
+                nextMode = 'dark';
+                toastText = "已切換至深色模式";
+            } else if (currentMode === 'dark') {
+                nextMode = 'auto';
+                toastText = "已切換至自動跟隨系統";
+            } else {
+                nextMode = 'light';
+                toastText = "已切換至淺色模式";
+            }
+
+            currentMode = nextMode;
+            localStorage.setItem('theme_mode', nextMode); // 儲存設定
+            applyTheme(nextMode);
+            showToast(toastText);
+        }
+
+        // 監聽系統變更 (只在 auto 模式下生效)
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                if (currentMode === 'auto') {
+                    applyTheme('auto');
+                }
+            });
+        }
+
+        function showToast(text) {
+            const toast = document.getElementById('theme-toast');
+            toast.textContent = text;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function updateGreeting(isDarkMode) {
+            if (typeof isDarkMode === 'undefined') isDarkMode = document.body.classList.contains('dark-mode');
+            const hour = new Date().getHours();
+            const textEl = document.getElementById('greetingText');
+            const iconEl = document.getElementById('greetingIcon');
+            const containerEl = document.getElementById('greetingContainer');
     <script>
         // 修正 Service Worker 註冊，確保只在支援的安全環境 (HTTPS/localhost) 下執行
         if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
@@ -399,6 +513,13 @@
                                 <i class="fa-solid fa-chevron-right text-xs"></i>
                             </div>
                         `;
+                        
+                        // === 新增：確保點擊後焦點被清除 (第 2 點) ===
+                        card.addEventListener('click', function() {
+                            this.blur(); 
+                        });
+                        // ======================================
+
                         grid.appendChild(card);
                     });
                     section.appendChild(grid);
@@ -419,14 +540,71 @@
             }
         }
 
-        function filterApps() {
-            renderCategories(document.getElementById('searchInput').value);
+        // === 快速搜尋返回邏輯 (第 3 點) ===
+        let isSearchMode = false; 
+
+        function clearSearchAndReturn() {
+            const searchInput = document.getElementById('searchInput');
+            
+            // 1. 清空搜尋欄，並讓 App 重新渲染主頁內容
+            searchInput.value = '';
+            renderCategories();
+
+            // 2. 移除搜尋模式狀態
+            isSearchMode = false; 
+
+            // 3. (關鍵) 清除歷史記錄中多餘的狀態 (Android/PWA 必須)
+            if (history.length > 1) {
+                history.back(); // 退回到 App 初始狀態
+            }
         }
+
+        // 替換您原有的 filterApps 函式
+        function filterApps() {
+            const filterText = document.getElementById('searchInput').value;
+            renderCategories(filterText);
+
+            // 歷史記錄管理：確保系統返回鍵在搜尋時不會退出 App
+            if (filterText.length > 0 && !isSearchMode) {
+                // 進入搜尋模式：推入一個新的狀態到瀏覽器歷史記錄堆疊
+                history.pushState({ search: true }, 'Searching', '#search'); 
+                isSearchMode = true;
+
+            } else if (filterText.length === 0 && isSearchMode) {
+                // 退出搜尋模式：如果輸入框清空，執行返回邏輯
+                clearSearchAndReturn();
+            }
+        }
+
+
+        // 系統返回鍵攔截 (第 3a 點)
+        function handlePopState(e) {
+            // 偵測到使用者按下了系統返回鍵/手勢 (在 Android 上)
+            
+            // 如果目前在「搜尋模式」且輸入欄仍有內容，則攔截
+            if (isSearchMode && document.getElementById('searchInput').value.length > 0) {
+                
+                // 1. 阻止瀏覽器執行預設的返回動作
+                history.pushState({ search: false }, '', '');
+                
+                // 2. 執行我們自定義的「退出搜尋模式」
+                clearSearchAndReturn();
+            } else {
+                // 如果輸入框是空的，則允許系統執行正常的返回/退出 App 動作
+                isSearchMode = false;
+            }
+        }
+
+        // 註冊 PopState 監聽器
+        window.addEventListener('popstate', handlePopState);
+        // ======================================
 
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             renderCategories();
         });
     </script>
+
 </body>
+
 </html>
