@@ -32,29 +32,32 @@
         
         /* 主容器回彈動畫 */
         main {
-            transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
             will-change: transform;
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
         
         main.pulling {
-            transition: none;
+            transition: none !important;
         }
         
         main.bouncing {
-            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         
         /* Header 回彈效果 */
         header {
-            transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            will-change: transform;
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
         
         header.pulling {
-            transition: none;
+            transition: none !important;
         }
         
         header.bouncing {
-            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
         :root {
@@ -111,8 +114,26 @@
             border-radius: 12px;
             outline: none !important;
             user-select: none;
-            transition: transform 0.15s ease, background-color 0.15s ease;
             position: relative;
+            
+            /* 硬體加速 */
+            will-change: transform, background-color;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            -webkit-font-smoothing: antialiased;
+            
+            /* 即時過渡,無延遲 */
+            transition: transform 0.08s ease-out, 
+                        background-color 0.08s ease-out,
+                        border-color 0.08s ease-out;
+        }
+        
+        .app-card .card-icon,
+        .app-card h3,
+        .app-card .fa-chevron-right {
+            will-change: background-color, color, transform;
+            transform: translateZ(0);
+            transition: all 0.08s ease-out;
         }
         
         body.dark-mode .app-card { 
@@ -124,13 +145,12 @@
         .app-card .fa-chevron-right {
             color: var(--icon-color);
             opacity: 0.5;
-            transition: color 0.2s, transform 0.2s, opacity 0.2s;
         }
 
         /* === Hover (桌面) === */
         @media (hover: hover) {
             .app-card:hover {
-                transform: translateY(-2px);
+                transform: translateY(-2px) translateZ(0);
                 border-color: var(--brand-accent);
                 box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             }
@@ -143,7 +163,7 @@
             }
             .app-card:hover .fa-chevron-right {
                 color: var(--brand-accent);
-                transform: translateX(2px);
+                transform: translateX(2px) translateZ(0);
                 opacity: 1;
             }
             body.dark-mode .app-card:hover h3 { 
@@ -151,26 +171,29 @@
             }
         }
 
-        /* === Active/Clicking 狀態 (手機觸控) === */
+        /* === Active/Clicking 狀態 (手機觸控) - 即時響應 === */
         .app-card.active {
-            transform: scale(0.98) !important;
+            transform: scale(0.98) translateZ(0) !important;
             background-color: var(--icon-bg) !important;
-            transition: none !important;
+            transition: none !important; /* 完全移除過渡延遲 */
         }
         
         .app-card.active .card-icon {
             background-color: var(--brand-accent) !important;
             color: white !important;
+            transition: none !important;
         }
         
         .app-card.active h3 {
             color: var(--brand-primary) !important;
+            transition: none !important;
         }
         
         .app-card.active .fa-chevron-right {
             color: var(--brand-accent) !important;
             opacity: 1 !important;
-            transform: translateX(2px) !important;
+            transform: translateX(2px) translateZ(0) !important;
+            transition: none !important;
         }
         
         body.dark-mode .app-card.active h3 { 
@@ -360,48 +383,67 @@
             searchInput.focus();
         }
 
-        // ===== iOS 風格回彈效果 =====
+        // ===== iOS 風格回彈效果 (優化版) =====
         let pullStartY = 0;
         let isPulling = false;
         let currentPull = 0;
+        let animationFrameId = null;
         const mainElement = document.querySelector('main');
         const headerElement = document.querySelector('header');
-        const MAX_PULL = 80; // 最大拉伸距離
+        const MAX_PULL = 100;
         
         function applyPullEffect(pullDistance) {
-            // 使用阻尼函數,拉得越多阻力越大
-            const damping = 0.5;
-            const actualPull = pullDistance * damping * (1 - pullDistance / (MAX_PULL * 3));
-            currentPull = Math.max(0, Math.min(actualPull, MAX_PULL));
+            // 取消之前的動畫幀
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
             
-            // 同時變形 header 和 main,產生拉伸效果
-            const scaleY = 1 + (currentPull / 300); // 輕微縮放
-            headerElement.style.transform = `translateY(${currentPull}px) scaleY(${scaleY})`;
-            mainElement.style.transform = `translateY(${currentPull}px)`;
+            animationFrameId = requestAnimationFrame(() => {
+                // 使用指數阻尼,更自然的拉伸感
+                const damping = 0.4;
+                const resistance = Math.pow(pullDistance / MAX_PULL, 0.7);
+                const actualPull = pullDistance * damping * (1 - resistance);
+                currentPull = Math.max(0, Math.min(actualPull, MAX_PULL));
+                
+                // 拉伸時 Header 輕微放大
+                const scaleY = 1 + (currentPull / 400);
+                const scaleX = 1 - (currentPull / 2000); // 輕微橫向收縮
+                
+                // 使用 transform 而非 top/margin (硬體加速)
+                headerElement.style.transform = `translate3d(0, ${currentPull}px, 0) scale(${scaleX}, ${scaleY})`;
+                mainElement.style.transform = `translate3d(0, ${currentPull}px, 0)`;
+                
+                animationFrameId = null;
+            });
         }
         
         function releasePullEffect() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
             headerElement.classList.add('bouncing');
             mainElement.classList.add('bouncing');
             
-            headerElement.style.transform = '';
-            mainElement.style.transform = '';
+            // 重置變形
+            headerElement.style.transform = 'translate3d(0, 0, 0) scale(1, 1)';
+            mainElement.style.transform = 'translate3d(0, 0, 0)';
             
             setTimeout(() => {
                 headerElement.classList.remove('bouncing', 'pulling');
                 mainElement.classList.remove('bouncing', 'pulling');
+                headerElement.style.transform = '';
+                mainElement.style.transform = '';
                 currentPull = 0;
-            }, 500);
+            }, 400);
         }
         
-        // 全域觸控事件（不與按鈕衝突）
-        let globalTouchStartY = 0;
-        
+        // 全域觸控事件
         window.addEventListener('touchstart', (e) => {
-            globalTouchStartY = e.touches[0].clientY;
             const scrollY = window.scrollY || window.pageYOffset;
             
-            if (scrollY === 0) {
+            if (scrollY <= 5) { // 容差 5px
                 isPulling = true;
                 pullStartY = e.touches[0].clientY;
                 headerElement.classList.add('pulling');
@@ -410,26 +452,42 @@
         }, { passive: true });
         
         window.addEventListener('touchmove', (e) => {
+            if (!isPulling) return;
+            
             const scrollY = window.scrollY || window.pageYOffset;
             
-            if (isPulling && scrollY === 0) {
+            if (scrollY <= 5) {
                 const currentY = e.touches[0].clientY;
                 const pullDistance = currentY - pullStartY;
                 
                 if (pullDistance > 0) {
                     applyPullEffect(pullDistance);
                 }
+            } else {
+                // 開始滾動了,取消拉伸
+                if (currentPull > 0) {
+                    isPulling = false;
+                    releasePullEffect();
+                }
             }
         }, { passive: true });
         
         window.addEventListener('touchend', () => {
-            if (isPulling) {
+            if (isPulling && currentPull > 0) {
                 isPulling = false;
                 releasePullEffect();
             }
+            isPulling = false;
+        }, { passive: true });
+        
+        window.addEventListener('touchcancel', () => {
+            if (isPulling && currentPull > 0) {
+                releasePullEffect();
+            }
+            isPulling = false;
         }, { passive: true });
 
-        // ===== 觸控事件處理 (即時響應版) =====
+        // ===== 觸控事件處理 (極致優化版) =====
         let currentActiveCard = null; // 追蹤當前啟動的卡片
         let isScrolling = false; // 追蹤是否正在滾動頁面
         let touchStartY = 0;
@@ -542,27 +600,48 @@
         }
 
         // 頁面恢復時清除所有 active 狀態
-        window.addEventListener('pageshow', () => {
+        window.addEventListener('pageshow', (event) => {
+            // 立即清除所有狀態
             clearAllActiveStates();
-            // 額外清除所有可能的 focus
+            
+            // 強制移除所有可能殘留的 active class
             document.querySelectorAll('.app-card').forEach(el => {
-                el.blur(); 
+                el.classList.remove('active');
+                el.blur();
             });
+            
+            // 清除 focus
             if (document.activeElement && document.activeElement.classList.contains('app-card')) {
                 document.activeElement.blur();
             }
+            
+            // 重置變數
+            currentActiveCard = null;
+            lastProcessedCard = null;
+            isScrolling = false;
+            hasMovedVertically = false;
         });
 
         // 當用戶返回頁面時清除狀態
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 clearAllActiveStates();
+                
+                // 額外保險:強制清除所有 active
+                document.querySelectorAll('.app-card.active').forEach(card => {
+                    card.classList.remove('active');
+                });
+                
+                currentActiveCard = null;
+                lastProcessedCard = null;
             }
         });
 
         // 頁面失去焦點時也清除（例如切換到其他應用）
         window.addEventListener('blur', () => {
             clearAllActiveStates();
+            currentActiveCard = null;
+            lastProcessedCard = null;
         });
 
         // 監聽頁面滾動，滾動時清除 active 狀態
