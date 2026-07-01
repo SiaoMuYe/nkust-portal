@@ -15,209 +15,196 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script> tailwind.config = { darkMode: 'class' } </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 引入 SortableJS 以實現平滑拖曳與自動讓位功能 -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght=300;400;500;700&display=swap');
         
-        /* 1. 隱藏捲軸 */
         * { -ms-overflow-style: none !important; scrollbar-width: none !important; }
         *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; background: transparent !important; }
 
-        /* 2. [還原] 您原本的設定：允許 contain 以配合 JS 回彈 */
-        html, body { 
-            overscroll-behavior-y: contain; 
-            height: 100%; 
-            overflow-y: auto; 
-        }
-        
-        /* [還原] Welcome Banner 回彈樣式 */
-        #welcomeBanner {
-            will-change: transform;
-            transform: translateZ(0);
-            backface-visibility: hidden;
-        }
-        #welcomeBanner.pulling { transition: none !important; }
-        #welcomeBanner.bouncing { transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-        
-        /* [還原] Main 回彈樣式 */
-        main {
-            will-change: transform;
-            transform: translateZ(0);
-            backface-visibility: hidden;
-        }
-        main.pulling { transition: none !important; }
-        main.bouncing { transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-        
-        /* [還原] Header 回彈樣式 */
-        header {
-            will-change: transform;
-            transform: translateZ(0);
-            backface-visibility: hidden;
-            /* 修正：移除 border 避免雙讀條 */
-            border: 0 !important; 
-            border-bottom: 0 !important; 
-            box-shadow: none !important;
-        }
-        header.pulling { transition: none !important; }
-        header.bouncing { transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        html, body { overscroll-behavior-y: contain; overscroll-behavior-x: none; overflow-x: hidden; height: 100%; overflow-y: auto; }
+        .bouncing { transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .pulling { transition: none !important; }
+        #welcomeBanner, main, header { will-change: transform; transform: translateZ(0); backface-visibility: hidden; }
+        header { border: 0 !important; border-bottom: 0 !important; box-shadow: none !important; }
 
         :root {
-            --brand-primary: #002d72;   
-            --brand-accent: #f59e0b;    
-            --bg-body: #f8fafc;
-            --text-main: #1e293b;       
-            --text-sub: #64748b;
-            --card-bg: #ffffff;
-            --icon-bg: #f1f5f9;
-            --icon-color: #475569;
+            --brand-primary: #002d72; --brand-accent: #f59e0b; --bg-body: #f8fafc;
+            --text-main: #1e293b; --text-sub: #64748b; --card-bg: #ffffff;
+            --icon-bg: #f1f5f9; --icon-color: #475569; --border-color: #e2e8f0;
         }
         body.dark-mode {
-            --bg-body: #09090b;         
-            --text-main: #e4e4e7;       
-            --text-sub: #71717a;        
-            --card-bg: #18181b;         
-            --icon-bg: #27272a;         
-            --icon-color: #a1a1aa;      
-            --brand-primary: #3b82f6;   
-            --brand-accent: #d97706;    
-        }
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            transition: background-color 0.3s ease, color 0.3s ease;
-            -webkit-tap-highlight-color: transparent;
+            --bg-body: #09090b; --text-main: #e4e4e7; --text-sub: #71717a; 
+            --card-bg: #18181b; --icon-bg: #27272a; --icon-color: #a1a1aa; 
+            --brand-primary: #3b82f6; --brand-accent: #d97706; --border-color: #27272a;
         }
         
-        .hero-banner {
-            background: linear-gradient(135deg, #002d72 0%, #1e3a8a 100%);
-            color: white;
-            position: relative;
-            overflow: hidden;
-            transition: background 0.3s ease;
-        }
-        body.dark-mode .hero-banner {
-            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
-            border: 1px solid #312e81;
-        }
-        .hero-shape {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.03);
-            pointer-events: none;
-        }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--bg-body); color: var(--text-main); transition: background-color 0.3s ease, color 0.3s ease; -webkit-tap-highlight-color: transparent; }
+        
+        .hero-banner { background: linear-gradient(135deg, #002d72 0%, #1e3a8a 100%); color: white; position: relative; overflow: hidden; transition: background 0.3s ease; }
+        body.dark-mode .hero-banner { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); border: 1px solid #312e81; }
+        .hero-shape { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.03); pointer-events: none; }
 
-        /* === App Card (JS 接管模式) === */
-        .app-card {
-            background-color: var(--card-bg);
-            border: 1px solid transparent;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            border-radius: 12px;
-            outline: none !important;
-            user-select: none;
-            position: relative;
-            /* 恢復原本的 transition */
-            transition: transform 0.08s ease-out, background-color 0.08s ease-out, border-color 0.08s ease-out;
-        }
-        
-        .app-card .card-icon, .app-card h3, .app-card .fa-chevron-right {
-            will-change: background-color, color, transform;
-            transition: all 0.08s ease-out;
-        }
+        .app-card { background-color: var(--card-bg); border: 1px solid transparent; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); border-radius: 12px; outline: none !important; user-select: none; position: relative; transition: transform 0.08s ease-out, background-color 0.08s ease-out, border-color 0.08s ease-out; }
+        .app-card .card-icon, .app-card h3, .app-card .fa-chevron-right { will-change: background-color, color, transform; transition: all 0.08s ease-out; }
         .app-card .fa-chevron-right { color: var(--icon-color); opacity: 0.5; }
-
-        /* 防沾黏：禁用原生 Focus/Active */
-        .app-card:focus, .app-card:active, .app-card:focus-visible {
-            background-color: var(--card-bg) !important;
-            border-color: transparent !important;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
-            transform: none !important;
-        }
-        .app-card:focus .card-icon, .app-card:active .card-icon {
-            background-color: var(--icon-bg) !important; color: var(--icon-color) !important;
-        }
+        .app-card:focus, .app-card:active, .app-card:focus-visible { background-color: var(--card-bg) !important; border-color: transparent !important; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important; transform: none !important; }
+        .app-card:focus .card-icon, .app-card:active .card-icon { background-color: var(--icon-bg) !important; color: var(--icon-color) !important; }
         .app-card:focus h3, .app-card:active h3 { color: var(--text-main) !important; }
-        .app-card:focus .fa-chevron-right, .app-card:active .fa-chevron-right {
-            color: var(--icon-color) !important; opacity: 0.5 !important; transform: none !important;
-        }
-
-        /* 變色狀態 (由 JS .is-pressing 控制) */
-        .app-card.is-pressing {
-            background-color: var(--icon-bg) !important;
-            transform: scale(0.98) !important;
-            transition: none !important;
-        }
-        .app-card.is-pressing .card-icon {
-            background-color: var(--brand-accent) !important;
-            color: white !important;
-            transition: none !important;
-        }
+        .app-card:focus .fa-chevron-right, .app-card:active .fa-chevron-right { color: var(--icon-color) !important; opacity: 0.5 !important; transform: none !important; }
+        .app-card.is-pressing { background-color: var(--icon-bg) !important; transform: scale(0.98) !important; transition: none !important; }
+        .app-card.is-pressing .card-icon { background-color: var(--brand-accent) !important; color: white !important; transition: none !important; }
         .app-card.is-pressing h3 { color: var(--brand-primary) !important; transition: none !important;}
-        .app-card.is-pressing .fa-chevron-right {
-            color: var(--brand-accent) !important;
-            opacity: 1 !important;
-            transform: translateX(2px) !important;
-            transition: none !important;
-        }
+        .app-card.is-pressing .fa-chevron-right { color: var(--brand-accent) !important; opacity: 1 !important; transform: translateX(2px) !important; transition: none !important; }
 
-        /* 深色模式修正 */
         body.dark-mode .app-card { border: 1px solid #27272a; box-shadow: none; }
-        body.dark-mode .app-card:focus, body.dark-mode .app-card:active {
-            background-color: var(--card-bg) !important;
-        }
+        body.dark-mode .app-card:focus, body.dark-mode .app-card:active { background-color: var(--card-bg) !important; }
         body.dark-mode .app-card.is-pressing h3 { color: #60a5fa !important; }
         body.dark-mode .app-card.is-pressing .fa-chevron-right { color: var(--brand-accent) !important; }
 
-        /* Hover (僅電腦) */
         @media (hover: hover) {
-            .app-card:hover {
-                transform: translateY(-2px); border-color: var(--brand-accent);
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            }
+            .app-card:hover { transform: translateY(-2px); border-color: var(--brand-accent); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
             .app-card:hover .card-icon { background-color: var(--brand-accent); color: white; }
             .app-card:hover h3 { color: var(--brand-primary); }
             .app-card:hover .fa-chevron-right { color: var(--brand-accent); transform: translateX(2px); opacity: 1; }
             body.dark-mode .app-card:hover h3 { color: #60a5fa; }
         }
 
-        /* === 搜尋框與按鈕 === */
         .search-input { transition: background-color 0.3s, color 0.3s; }
-        
-        /* 淺色模式 */
-        .search-input:focus, button:focus {
-            outline: none; background-color: #ffffff;
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4) !important;
-        }
-        
-        /* 深色模式：[保留修復] 深黑底 + 白字 + 灰暈 */
-        body.dark-mode .search-input {
-            background-color: #18181b !important; color: white !important; border: 1px solid #27272a;
-        }
+        .search-input:focus { outline: none; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4) !important; }
+        body.dark-mode .search-input { background-color: #18181b !important; color: white !important; border: 1px solid #27272a; }
         body.dark-mode .search-input::placeholder { color: #71717a !important; }
-        body.dark-mode .search-input:focus, body.dark-mode button:focus {
-            background-color: #27272a !important; border-color: transparent;
-            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.5) !important; 
-        }
+        body.dark-mode .search-input:focus { background-color: #27272a !important; border-color: transparent; box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.5) !important; }
         button { border-radius: 9999px; }
 
-        /* Toast */
-        #theme-toast {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
-            background: rgba(0,0,0,0.8); color: white; padding: 8px 16px;
-            border-radius: 20px; font-size: 13px; font-weight: 300; letter-spacing: 0.5px;
-            opacity: 0; transition: all 0.3s ease; z-index: 100; backdrop-filter: blur(4px);
-        }
+        /* 將 z-index 調整至 150，確保永遠高於彈窗 (100) 與二次確認層 (110) */
+        #theme-toast { position: fixed; bottom: 92px; left: 50%; transform: translateX(-50%) translateY(100px); background: rgba(0,0,0,0.8); color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 300; letter-spacing: 0.5px; opacity: 0; transition: all 0.3s ease; z-index: 150; backdrop-filter: blur(4px); pointer-events: none; }
         #theme-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .page-view[hidden] { display: none !important; }
+
+        .bottom-nav-shell { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 90; width: min(calc(100% - 28px), 390px); padding: 6px; border-radius: 9999px; background: rgba(255, 255, 255, 0.82); border: 1px solid rgba(148, 163, 184, 0.22); box-shadow: 0 18px 35px rgba(15, 23, 42, 0.14); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); will-change: transform; backface-visibility: hidden; }
+        body.dark-mode .bottom-nav-shell { background: rgba(24, 24, 27, 0.82); border-color: rgba(63, 63, 70, 0.72); box-shadow: 0 18px 35px rgba(0, 0, 0, 0.35); }
+        .bottom-nav-btn { height: 56px; color: var(--text-sub); border: 1px solid transparent; background: transparent; box-shadow: none; transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; outline: none !important; }
+        .bottom-nav-btn:focus, body.dark-mode .bottom-nav-btn:focus { box-shadow: none !important; background-color: transparent !important; }
+        .bottom-nav-btn i { font-size: 18px; line-height: 1; transition: color 0.2s ease, transform 0.2s ease; }
+        .bottom-nav-btn span { font-size: 11px; line-height: 1; letter-spacing: 0; }
+        .bottom-nav-btn.is-active, .bottom-nav-btn.is-active:focus { color: var(--text-main); transform: translateY(-1px); background: rgba(255, 255, 255, 0.56) !important; border-color: rgba(255, 255, 255, 0.72); box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.75) !important; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+        .bottom-nav-btn.is-active i { color: var(--brand-primary); transform: translateY(-1px); }
+        body.dark-mode .bottom-nav-btn.is-active, body.dark-mode .bottom-nav-btn.is-active:focus { background: rgba(39, 39, 42, 0.58) !important; border-color: rgba(255, 255, 255, 0.08); box-shadow: 0 10px 22px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important; }
+        body.dark-mode .bottom-nav-btn.is-active i { color: var(--brand-accent); }
         
         .animate-card { opacity: 0; animation: fadeUp 0.5s ease-out forwards; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        .footer-line { border-top: 1px solid rgba(0, 0, 0, 0.05); }
-        body.dark-mode .footer-line { border-top: 1px solid rgba(255, 255, 255, 0.05); }
+        .setting-card { background-color: var(--card-bg); border: 1px solid transparent; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important; border-radius: 12px; transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease; outline: none !important; -webkit-tap-highlight-color: transparent; }
+        .setting-card h3 { transition: color 0.2s ease; }
+        .setting-card:focus { background-color: var(--card-bg) !important; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important; }
+        body.dark-mode .setting-card { border: 1px solid #27272a; box-shadow: none !important; }
+        body.dark-mode .setting-card:focus { background-color: var(--card-bg) !important; box-shadow: none !important; }
+        .setting-card:hover, .setting-card:active { transform: translateY(-2px); box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.1) !important; }
+        .setting-card:hover h3, .setting-card:active h3 { color: var(--brand-primary) !important; }
+        body.dark-mode .setting-card:hover, body.dark-mode .setting-card:active { border-color: #3f3f46; box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.4) !important; }
+        body.dark-mode .setting-card:hover h3, body.dark-mode .setting-card:active h3 { color: #60a5fa !important; }
+        
+        /* 彈窗遮罩：純粹背景變暗，不使用任何毛玻璃（Defocus / Dimming effect only） */
+        .modal-overlay { opacity: 0; pointer-events: none; transition: opacity 0.15s ease-out; }
+        .modal-overlay.is-active { opacity: 1; pointer-events: auto; }
+        .modal-panel { transform: scale(0.95) translateY(10px); opacity: 0; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease-out; }
+        .modal-overlay.is-active .modal-panel { transform: scale(1) translateY(0); opacity: 1; }
+
+        .form-input { width: 100%; padding: 10px 12px; border-radius: 8px; font-size: 14px; background-color: var(--icon-bg); color: var(--text-main); border: 1px solid transparent; transition: all 0.2s; outline: none; }
+        .form-input:focus { border-color: var(--brand-primary); background-color: var(--card-bg); box-shadow: 0 0 0 3px rgba(0, 45, 114, 0.1); }
+        body.dark-mode .form-input:focus { box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2); border-color: var(--brand-accent); }
+        
+        /* 選擇區塊下拉選單樣式優化，自訂完美的右側下拉箭頭間距 */
+        select.form-input {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+            background-repeat: no-repeat;
+            background-position: right 16px center; /* 優雅間距，不與右側過度擠壓 */
+            background-size: 16px;
+            padding-right: 40px !important; /* 確保選單文字不與箭頭重疊 */
+            cursor: pointer;
+        }
+        body.dark-mode select.form-input {
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+        }
+        
+        .icon-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+        @media (max-width: 640px) { .icon-grid {grid-template-columns: repeat(5, 1fr);} }
+        
+        .icon-btn { aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--icon-color); background-color: var(--icon-bg); border: 2px solid transparent; cursor: pointer; transition: all 0.15s; outline: none; }
+        .icon-btn:hover, .icon-btn:focus { background-color: var(--card-bg) !important; border-color: rgba(148, 163, 184, 0.4) !important; transform: translateY(-2px); box-shadow: none !important; }
+        .icon-btn.selected, .icon-btn.selected:focus { background-color: var(--brand-primary) !important; color: white !important; border-color: var(--brand-primary) !important; transform: scale(1.05) !important; box-shadow: 0 4px 10px rgba(0, 45, 114, 0.3) !important; }
+        body.dark-mode .icon-btn.selected, body.dark-mode .icon-btn.selected:focus { background-color: var(--brand-accent) !important; border-color: var(--brand-accent) !important; box-shadow: 0 4px 10px rgba(217, 119, 6, 0.3) !important; }
+
+        /* ====== 排序與刪除清單樣式 ====== */
+        /* 修復在電腦上按住拖拉時會導致文字被反白（反藍選取）的 bug，在此處加上 user-select: none 阻擋瀏覽器預設選取行為 */
+        .list-item-row { 
+            transition: background-color 0.2s; 
+            position: relative; 
+            user-select: none; 
+            -webkit-user-select: none; 
+            -moz-user-select: none; 
+            -ms-user-select: none; 
+        }
+        .list-item-row:hover, .list-item-row:active { background-color: var(--icon-bg); }
+        .list-group-ul { margin-left: -1.25rem; margin-right: -1.25rem; }
+        .list-item-row { padding-left: 1.25rem; padding-right: 1.25rem; border-bottom: 1px solid var(--border-color); }
+        .list-item-row:last-child { border-bottom: none; }
+        
+        /* 圓形勾選框樣式 */
+        .circle-checkbox { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--icon-color); display: flex; align-items: center; justify-content: center; transition: all 0.2s; opacity: 0.6; }
+        .list-item-row.is-checked .circle-checkbox { background-color: #ef4444; border-color: #ef4444; opacity: 1; }
+        .circle-checkbox i { font-size: 12px; color: white; opacity: 0; transition: opacity 0.2s; }
+        .list-item-row.is-checked .circle-checkbox i { opacity: 1; }
+        
+        /* 拖曳手把樣式 */
+        .drag-handle { cursor: grab; padding: 10px 15px 10px 0; color: var(--icon-color); opacity: 0.5; transition: opacity 0.2s; }
+        .drag-handle:active { cursor: grabbing; }
+        .list-item-row:hover .drag-handle { opacity: 1; }
+
+        /* SortableJS 動態樣式 */
+        .sortable-ghost { opacity: 0.3; background-color: var(--icon-bg); }
+        .sortable-drag { 
+            background-color: var(--card-bg) !important;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important; 
+            transform: scale(1.02);
+            z-index: 100;
+            border-radius: 8px;
+            border-bottom: none !important;
+        }
+        body.dark-mode .sortable-drag { box-shadow: 0 15px 30px rgba(0,0,0,0.5) !important; border: 1px solid #3f3f46; }
+        
+        /* 彈窗安全留白與懸浮按鈕 */
+        .modal-body-scroll { padding-bottom: 50px !important; } /* 精細優化安全留白，避免底部的最後一筆字體與勾選框被擋住，亦不過度空曠 */
+        .floating-action-bar {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 30;
+            display: flex;
+            gap: 12px;
+            pointer-events: none; /* 讓點擊能穿透按鈕間的縫隙 */
+        }
+        .floating-action-bar > button {
+            pointer-events: auto; /* 恢復按鈕本身的點擊事件 */
+        }
+
+        /* 二次確認彈窗 (疊加於原彈窗之上) */
+        .confirm-overlay { background: rgba(0,0,0,0.4); z-index: 110; }
+        body.dark-mode .confirm-overlay { background: rgba(0,0,0,0.6); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <header class="sticky top-0 z-50 backdrop-blur-md bg-[var(--card-bg)]/90 transition-colors duration-300">
+    <header id="appHeader" class="sticky top-0 z-50 backdrop-blur-md bg-[var(--card-bg)]/90 transition-colors duration-300">
         <div class="max-w-3xl mx-auto px-5 py-3 flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <div class="w-14 h-14 rounded-2xl bg-[#002d72] dark:bg-[#d97706] flex items-center justify-center shadow-md flex-shrink-0 relative overflow-hidden group transition-colors duration-300">
@@ -235,48 +222,175 @@
         </div>
     </header>
 
-    <main class="flex-grow max-w-3xl mx-auto w-full px-5 py-6 space-y-8">
-        <div id="welcomeBanner" class="hero-banner rounded-xl p-6 shadow-md animate-card" style="animation-delay: 0.1s;">
-            <div class="hero-shape w-40 h-40 -top-10 -right-10"></div>
-            <div class="hero-shape w-24 h-24 bottom-2 right-12"></div>
-            <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <div id="greetingContainer" class="flex items-center gap-2 mb-1">
-                        <i id="greetingIcon" class="fa-regular fa-sun"></i>
-                        <span id="greetingText" class="font-bold text-sm tracking-wider uppercase">早安</span>
+    <main class="flex-grow max-w-3xl mx-auto w-full px-5 py-6 pb-28 space-y-8">
+        <!-- 入口首頁 -->
+        <section id="homeView" class="page-view space-y-8" data-page="home">
+            <div id="welcomeBanner" class="hero-banner rounded-xl p-6 shadow-md animate-card" style="animation-delay: 0.1s;">
+                <div class="hero-shape w-40 h-40 -top-10 -right-10"></div>
+                <div class="hero-shape w-24 h-24 bottom-2 right-12"></div>
+                <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <div id="greetingContainer" class="flex items-center gap-2 mb-1">
+                            <i id="greetingIcon" class="fa-regular fa-sun"></i>
+                            <span id="greetingText" class="font-bold text-sm tracking-wider uppercase">早安</span>
+                        </div>
+                        <h2 class="text-xl sm:text-2xl font-bold mb-2 text-white dark:text-gray-200">系統已準備就緒</h2>
+                        <p class="text-blue-100/90 dark:text-gray-400 text-sm">歡迎使用校務整合服務</p>
                     </div>
-                    <h2 class="text-xl sm:text-2xl font-bold mb-2 text-white dark:text-gray-200">系統已準備就緒</h2>
-                    <p class="text-blue-100/90 dark:text-gray-400 text-sm">歡迎使用校務整合服務</p>
-                </div>
-                <div class="w-full sm:w-64 relative mt-2 sm:mt-0">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-main)] text-sm z-10"></i>
-                    <input type="text" id="searchInput" placeholder="快速搜尋..." 
-                           class="search-input w-full pl-9 pr-8 py-2.5 rounded-lg text-sm border-0 
-                                  bg-white text-[var(--text-main)] placeholder-[var(--text-main)] placeholder-opacity-70
-                                  shadow-lg shadow-black/5 transition-all opacity-100"
-                           autocomplete="off">
-                    <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-sub)] hover:text-red-500 p-1 z-20">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
+                    <div class="w-full sm:w-64 relative mt-2 sm:mt-0">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-main)] text-sm z-10"></i>
+                        <input type="text" id="searchInput" placeholder="快速搜尋..." 
+                               class="search-input w-full pl-9 pr-8 py-2.5 rounded-lg text-sm border-0 
+                                      bg-white text-[var(--text-main)] placeholder-[var(--text-main)] placeholder-opacity-70
+                                      shadow-lg shadow-black/5 transition-all opacity-100"
+                               autocomplete="off">
+                        <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-sub)] p-1 z-20">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div id="appContainer" class="space-y-8"></div>
-        
-        <div id="noResults" class="hidden flex flex-col items-center justify-center py-12 text-[var(--text-sub)]">
-            <div class="w-16 h-16 bg-[var(--icon-bg)] rounded-full flex items-center justify-center mb-3">
-                <i class="fa-solid fa-magnifying-glass text-xl opacity-30"></i>
+            <div id="appContainer" class="space-y-8"></div>
+            
+            <div id="noResults" class="hidden flex flex-col items-center justify-center py-12 text-[var(--text-sub)]">
+                <div class="w-16 h-16 bg-[var(--icon-bg)] rounded-full flex items-center justify-center mb-3">
+                    <i class="fa-solid fa-magnifying-glass text-xl opacity-30"></i>
+                </div>
+                <p class="text-sm opacity-80">找不到相關系統</p>
+                <button onclick="clearSearch()" class="mt-2 text-[var(--brand-primary)] text-sm hover:underline">清除搜尋</button>
             </div>
-            <p class="text-sm opacity-80">找不到相關系統</p>
-            <button onclick="clearSearch()" class="mt-2 text-[var(--brand-primary)] text-sm hover:underline">清除搜尋</button>
-        </div>
+        </section>
+
+        <!-- 工具箱頁面 -->
+        <section id="toolsView" class="page-view flex flex-col" data-page="tools" hidden>
+            <div class="animate-card mb-6">
+                <h2 class="text-2xl font-bold text-[var(--text-main)] tracking-wide">工具箱</h2>
+                <p class="text-sm text-[var(--text-sub)] mt-1">集成在大學中常用的工具</p>
+            </div>
+            
+            <div class="flex flex-col gap-3">
+                <button onclick="openModal('GPA換算器')" class="setting-card h-[76px] w-full p-4 flex items-center gap-4 text-left cursor-pointer animate-card" style="animation-delay: 0.1s;">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-500 dark:bg-blue-600 text-white">
+                        <i class="fa-solid fa-calculator"></i>
+                    </div>
+                    <div class="flex-grow min-w-0">
+                        <h3 class="font-bold text-[var(--text-main)] text-[15px]">GPA換算器</h3>
+                    </div>
+                    <div><i class="fa-solid fa-chevron-right text-xs text-[var(--icon-color)] opacity-50"></i></div>
+                </button>
+            </div>
+
+            <footer class="mt-8 mb-4 animate-card" style="animation-delay: 0.15s;">
+                <div class="text-center">
+                    <p class="text-xs text-[var(--text-sub)] opacity-60">這裡沒有更多東西囉！</p>
+                </div>
+            </footer>
+        </section>
+        
+        <!-- 偏好設定頁面 -->
+        <section id="settingsView" class="page-view flex flex-col" data-page="settings" hidden>
+            <div class="animate-card mb-6">
+                <h2 class="text-2xl font-bold text-[var(--text-main)] tracking-wide">入口偏好設置</h2>
+                <p class="text-sm text-[var(--text-sub)] mt-1">自定義捷徑入口與資料管理</p>
+            </div>
+            
+            <div class="flex flex-col gap-3">
+                <button onclick="openModal('調整入口排序')" class="setting-card h-[76px] w-full p-4 flex items-center gap-4 text-left cursor-pointer animate-card" style="animation-delay: 0.1s;">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-500 dark:bg-blue-600 text-white">
+                        <i class="fa-solid fa-bars-staggered"></i>
+                    </div>
+                    <div class="flex-grow min-w-0"><h3 class="font-bold text-[var(--text-main)] text-[15px]">調整入口排序</h3></div>
+                    <div><i class="fa-solid fa-chevron-right text-xs text-[var(--icon-color)] opacity-50"></i></div>
+                </button>
+                
+                <button onclick="openModal('新增網站入口')" class="setting-card h-[76px] w-full p-4 flex items-center gap-4 text-left cursor-pointer animate-card" style="animation-delay: 0.15s;">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-amber-500 text-white">
+                        <i class="fa-solid fa-plus text-lg"></i>
+                    </div>
+                    <div class="flex-grow min-w-0"><h3 class="font-bold text-[var(--text-main)] text-[15px]">新增網站入口</h3></div>
+                    <div><i class="fa-solid fa-chevron-right text-xs text-[var(--icon-color)] opacity-50"></i></div>
+                </button>
+                
+                <button onclick="openModal('刪除網站入口')" class="setting-card h-[76px] w-full p-4 flex items-center gap-4 text-left cursor-pointer animate-card" style="animation-delay: 0.2s;">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-red-500 text-white">
+                        <i class="fa-solid fa-minus text-lg"></i>
+                    </div>
+                    <div class="flex-grow min-w-0"><h3 class="font-bold text-[var(--text-main)] text-[15px]">刪除網站入口</h3></div>
+                    <div><i class="fa-solid fa-chevron-right text-xs text-[var(--icon-color)] opacity-50"></i></div>
+                </button>
+                
+                <button onclick="openModal('恢復出廠與儲存為預設值')" class="setting-card h-[76px] w-full p-4 flex items-center gap-4 text-left cursor-pointer animate-card" style="animation-delay: 0.25s;">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-slate-500 dark:bg-slate-600 text-white">
+                        <i class="fa-solid fa-arrow-rotate-left"></i>
+                    </div>
+                    <div class="flex-grow min-w-0">
+                        <h3 class="font-bold text-[var(--text-main)] text-[15px]">恢復出廠與儲存為預設值</h3>
+                        <p class="text-[13px] text-[var(--text-sub)] mt-0.5 truncate">管理入口狀態與重置</p>
+                    </div>
+                    <div><i class="fa-solid fa-chevron-right text-xs text-[var(--icon-color)] opacity-50"></i></div>
+                </button>
+            </div>
+            
+            <footer class="mt-8 mb-4 animate-card" style="animation-delay: 0.3s;">
+                <div class="text-center">
+                    <p class="text-xs text-[var(--text-sub)] opacity-60">&copy; 2026 NKUST Student Portal | 非官方校務整合平台</p>
+                </div>
+            </footer>
+        </section>
     </main>
 
-    <footer class="footer-line py-8 mt-auto text-center">
-        <p class="text-xs text-[var(--text-sub)] opacity-60">&copy; 2025 NKUST Student Portal | 非官方校務整合平台</p>
-    </footer>
+    <nav id="bottomNavShell" class="bottom-nav-shell" aria-label="主要頁面切換">
+        <div class="grid grid-cols-3 gap-1">
+            <button type="button" class="bottom-nav-btn is-active flex flex-col items-center justify-center gap-1 font-bold" data-page-target="home" aria-selected="true">
+                <i class="fa-solid fa-house"></i><span>入口首頁</span>
+            </button>
+            <button type="button" class="bottom-nav-btn flex flex-col items-center justify-center gap-1 font-bold" data-page-target="tools" aria-selected="false">
+                <i class="fa-solid fa-screwdriver-wrench"></i><span>工具</span>
+            </button>
+            <button type="button" class="bottom-nav-btn flex flex-col items-center justify-center gap-1 font-bold" data-page-target="settings" aria-selected="false">
+                <i class="fa-solid fa-sliders"></i><span>偏好設定</span>
+            </button>
+        </div>
+    </nav>
     <div id="theme-toast">已切換模式</div>
+
+    <!-- 設定與工具通用 Modal -->
+    <div id="settingsModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center modal-overlay">
+        <!-- 第一層 Modal 點擊背景關閉 -->
+        <div class="absolute inset-0 bg-black/40 dark:bg-black/60" onclick="closeModal()"></div>
+        
+        <div class="relative bg-[var(--card-bg)] w-[92%] sm:w-[90%] max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[85vh] sm:max-h-[90vh] modal-panel border border-transparent dark:border-gray-800 overflow-hidden">
+            <div class="px-5 py-4 border-b border-[var(--border-color)] relative z-20 bg-[var(--card-bg)] flex justify-between items-center">
+                <h3 class="text-lg font-bold text-[var(--text-main)]" id="modalTitle">設定</h3>
+                <!-- 右側關閉「X」按鈕 -->
+                <button id="modalCloseX" onclick="closeModal()" class="w-8 h-8 rounded-full hover:bg-[var(--icon-bg)] flex items-center justify-center text-[var(--text-sub)] hover:text-[var(--text-main)] transition-colors hidden" aria-label="關閉視窗">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <!-- 內容區塊 -->
+            <div id="modalBody" class="p-5 overflow-y-auto relative h-full"></div>
+            
+            <!-- 動態懸浮按鈕區 (透過 JS 插入內容) -->
+            <div id="modalFooterContainer"></div>
+        </div>
+        
+        <!-- 通用二次確認彈窗 (疊加於原彈窗之上) -->
+        <div id="secondaryConfirmOverlay" class="absolute inset-0 confirm-overlay hidden flex items-center justify-center opacity-0 transition-opacity duration-200" onclick="hideSecondaryConfirm()">
+             <div class="bg-[var(--card-bg)] w-[85%] max-w-sm p-6 rounded-2xl shadow-2xl transform scale-95 transition-transform duration-200 text-center border border-transparent dark:border-gray-800" id="secondaryConfirmBox" onclick="event.stopPropagation()">
+                <div class="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 text-red-500 mx-auto flex items-center justify-center text-xl mb-3" id="secondaryConfirmIcon">
+                    <i class="fa-solid fa-trash-can" id="secondaryConfirmIconInner"></i>
+                </div>
+                <h4 class="font-bold text-[var(--text-main)] text-lg mb-2" id="secondaryConfirmTitle">確認動作？</h4>
+                <p class="text-sm text-[var(--text-sub)] mb-5" id="secondaryConfirmDesc">此動作將無法還原。</p>
+                <div class="flex gap-3">
+                    <button type="button" onclick="hideSecondaryConfirm()" class="flex-1 py-2.5 rounded-xl bg-[var(--icon-bg)] text-[var(--text-main)] font-bold hover:opacity-80 transition-opacity">取消</button>
+                    <button type="button" id="secondaryConfirmBtn" class="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20">確認</button>
+                </div>
+             </div>
+        </div>
+    </div>
 
     <script>
         if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
@@ -286,108 +400,1044 @@
         const iconBlue = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23002d72'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
         const iconAmber = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23d97706'/%3E%3Cpath fill='white' d='M464 64H332.6c-21.4 0-43 5.9-61.6 16.8L256 90.9l-15-10.1C222.4 69.9 200.8 64 179.4 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h131.4c21.4 0 43-5.9 61.6-16.8L256 421.1l15 10.1c18.6 10.9 40.2 16.8 61.6 16.8H464c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM179.4 416H48c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16h131.4c14.2 0 28.4 3.5 41.2 10.4l35.4 19.3V386.7l-35.4-19.3c-12.8-6.9-27-10.4-41.2-10.4zm284.6 0H332.6c-14.2 0-28.4 3.5-41.2 10.4l-35.4 19.3V125.7l35.4-19.3c12.8-6.9 27-10.4 41.2-10.4H464c8.8 0 16 7.2 16 16v288c0 8.8-7.2 16-16 16z' transform='translate(256, 256) scale(0.36) translate(-256, -256)'/%3E%3C/svg%3E";
 
-        const categories = [
-            {
-                id: "academic", title: "教務與課程",
-                items: [
-                    { name: "學生教務系統", url: "https://stdsys.nkust.edu.tw/student", icon: "fa-solid fa-user-graduate", desc: "課表/成績/缺曠" },
-                    { name: "校務單一入口", url: "https://webap.nkust.edu.tw/nkust/", icon: "fa-solid fa-id-card", desc: "各類校務系統入口" },
-                    { name: "數位教學平台", url: "https://elearning.nkust.edu.tw/moocs/#/home", icon: "fa-solid fa-chalkboard-user", desc: "課程教材/作業繳交" },
-                    { name: "Zuvio", url: "https://irs.zuvio.com.tw/irs/login", icon: "fa-solid fa-comments", desc: "課堂互動/點名/測驗" },
-                    { name: "選課系統", url: "https://aais5.nkust.edu.tw/selcrs_std", icon: "fa-solid fa-list-check", desc: "加退選/搶課入口" }
-                ]
-            },
-            {
-                id: "life", title: "學務與生活",
-                items: [
-                    { name: "行事曆", url: "https://acad.nkust.edu.tw/p/412-1004-1588.php?Lang=zh-tw", icon: "fa-regular fa-calendar-days", desc: "學期考試/放假日程" },
-                    { name: "學務資訊系統", url: "https://oosaf.nkust.edu.tw/Home/Index", icon: "fa-solid fa-clipboard-check", desc: "請假申請/操行成績" },
-                    { name: "車輛管理系統", url: "https://vms.nkust.edu.tw", icon: "fa-solid fa-car", desc: "車證申請/違規查詢" },
-                    { name: "宿舍管理系統", url: "https://ws1.nkust.edu.tw/Dorm/Account/Login", icon: "fa-solid fa-bed", desc: "住宿申請/設備報修" }
-                ]
-            },
-            {
-                id: "resources", title: "多元學習資源",
-                items: [
-                    { name: "圖書館", url: "https://www.lib.nkust.edu.tw/portal/#", icon: "fa-solid fa-book", desc: "館藏查詢/空間預約" },
-                    { name: "OpenEdu", url: "https://www.openedu.tw", icon: "fa-solid fa-globe", desc: "開放式課程資源" },
-                    { name: "外語中心", url: "https://flec.nkust.edu.tw/p/412-1046-3536.php?Lang=zh-tw", icon: "fa-solid fa-language", desc: "英檢報名/學分抵免" },
-                    { name: "iRead 泛閱讀", url: "https://ws1.nkust.edu.tw/IRead/Account/Login?ReturnUrl=%2FIRead", icon: "fa-solid fa-book-open-reader", desc: "閱讀心得/點數認證" },
-                    { name: "ewant", url: "https://www.ewant.org/login/index.php", icon: "fa-solid fa-graduation-cap", desc: "高中/大學跨校通識" },
-                    { name: "深耕計畫", url: "https://higheredu.nkust.edu.tw/event", icon: "fa-solid fa-seedling", desc: "獎助學金/學習輔導" }
-                ]
-            }
+        const defaultCategories = [
+            { id: "academic", title: "教務與課程", items: [
+                { name: "學生教務系統", url: "https://stdsys.nkust.edu.tw/student", icon: "fa-solid fa-user-graduate", desc: "課表/成績/缺曠" },
+                { name: "校務單一入口", url: "https://webap.nkust.edu.tw/nkust/", icon: "fa-solid fa-id-card", desc: "各類校務系統入口" },
+                { name: "數位教學平台", url: "https://elearning.nkust.edu.tw/moocs/#/home", icon: "fa-solid fa-chalkboard-user", desc: "課程教材/作業繳交" },
+                { name: "Zuvio", url: "https://irs.zuvio.com.tw/irs/login", icon: "fa-solid fa-comments", desc: "課堂互動/點名/測驗" },
+                { name: "選課系統", url: "https://aais3.nkust.edu.tw/StdSelcrs", icon: "fa-solid fa-list-check", desc: "加退選/搶課入口" }
+            ]},
+            { id: "life", title: "學務與生活", items: [
+                { name: "行事曆", url: "https://acad.nkust.edu.tw/p/412-1004-1588.php?Lang=zh-tw", icon: "fa-regular fa-calendar-days", desc: "學期考試/放假日程" },
+                { name: "學務資訊系統", url: "https://oosaf.nkust.edu.tw/Home/Index", icon: "fa-solid fa-clipboard-check", desc: "請假申請/操行成績" },
+                { name: "車輛管理系統", url: "https://vms.nkust.edu.tw", icon: "fa-solid fa-car", desc: "車證申請/違規查詢" },
+                { name: "宿舍管理系統", url: "https://ws1.nkust.edu.tw/Dorm/Account/Login", icon: "fa-solid fa-bed", desc: "住宿申請/設備報修" }
+            ]},
+            { id: "resources", title: "多元學習資源", items: [
+                { name: "圖書館", url: "https://www.lib.nkust.edu.tw/portal/#", icon: "fa-solid fa-book", desc: "館藏查詢/空間預約" },
+                { name: "OpenEdu", url: "https://www.openedu.tw", icon: "fa-solid fa-globe", desc: "開放式課程資源" },
+                { name: "外語中心", url: "https://flec.nkust.edu.tw/p/412-1046-3536.php?Lang=zh-tw", icon: "fa-solid fa-language", desc: "英檢報名/學分抵免" },
+                { name: "iRead 泛閱讀", url: "https://ws1.nkust.edu.tw/IRead/Account/Login?ReturnUrl=%2FIRead", icon: "fa-solid fa-book-open-reader", desc: "閱讀心得/點數認證" },
+                { name: "ewant", url: "https://www.ewant.org/login/index.php", icon: "fa-solid fa-graduation-cap", desc: "高中/大學跨校通識" },
+                { name: "深耕計畫", url: "https://higheredu.nkust.edu.tw/event", icon: "fa-solid fa-seedling", desc: "獎助學金/學習輔導" }
+            ]}
         ];
+
+        let categories = [];
+        const savedCategories = localStorage.getItem('nkust_portal_categories');
+        const savedDefault = localStorage.getItem('nkust_portal_custom_default');
+        try {
+            if (savedCategories) {
+                categories = JSON.parse(savedCategories);
+            } else if (savedDefault) {
+                categories = JSON.parse(savedDefault);
+            } else {
+                categories = JSON.parse(JSON.stringify(defaultCategories));
+            }
+        } catch (e) {
+            console.warn("設定資料損毀，已恢復預設值。", e);
+            categories = JSON.parse(JSON.stringify(defaultCategories));
+            localStorage.removeItem("nkust_portal_categories");
+        }
+
+        function saveCategories() { localStorage.setItem('nkust_portal_categories', JSON.stringify(categories)); }
+
+        const iconList = [
+            "fa-solid fa-link", "fa-solid fa-envelope", "fa-solid fa-cloud", "fa-solid fa-gear", "fa-solid fa-file", "fa-solid fa-image",
+            "fa-solid fa-bell", "fa-solid fa-calendar", "fa-solid fa-camera", "fa-solid fa-comment", "fa-solid fa-folder", "fa-solid fa-heart",
+            "fa-solid fa-magnifying-glass", "fa-solid fa-music", "fa-solid fa-paper-plane", "fa-solid fa-star", "fa-solid fa-user", "fa-solid fa-video",
+            "fa-solid fa-compass", "fa-solid fa-globe", "fa-solid fa-briefcase", "fa-solid fa-book-open", "fa-solid fa-graduation-cap", "fa-solid fa-chalkboard-user",
+            "fa-solid fa-laptop-code", "fa-solid fa-calculator", "fa-solid fa-flask", "fa-solid fa-language", "fa-solid fa-pen-nib", "fa-solid fa-building"
+        ];
+
+        // ====== GPA 換算器全域狀態 ======
+        let gpaState = {
+            courses: [{ score: "", credits: "" }],
+            currentIndex: 0,
+            validationState: 'normal' // 'normal', 'success', 'error'
+        };
+
+        // --- GPA 對照與轉換演算法 ---
+        function getNKUST_GPA(score) {
+            if (score >= 90) return 4.3;
+            if (score >= 85) return 4.0;
+            if (score >= 80) return 3.7;
+            if (score >= 77) return 3.3;
+            if (score >= 73) return 3.0;
+            if (score >= 70) return 2.7;
+            if (score >= 67) return 2.3;
+            if (score >= 63) return 2.0;
+            if (score >= 60) return 1.7;
+            if (score >= 50) return 1.0;
+            return 0.0;
+        }
+
+        function getUniversal40_GPA(score) {
+            if (score >= 93) return 4.0;
+            if (score >= 90) return 3.7;
+            if (score >= 87) return 3.3;
+            if (score >= 83) return 3.0;
+            if (score >= 80) return 2.7;
+            if (score >= 77) return 2.3;
+            if (score >= 73) return 2.0;
+            if (score >= 70) return 1.7;
+            if (score >= 67) return 1.3;
+            if (score >= 63) return 1.0;
+            if (score >= 60) return 0.7;
+            return 0.0;
+        }
+
+        function getUniversal43_GPA(score) {
+            if (score >= 90) return 4.3;
+            if (score >= 85) return 4.0;
+            if (score >= 80) return 3.7;
+            if (score >= 75) return 3.3;
+            if (score >= 70) return 3.0;
+            if (score >= 65) return 2.7;
+            if (score >= 60) return 2.0;
+            return 0.0;
+        }
+
+        // 格式化百分制分數輔助函數 (整數自動補 .0)
+        function formatScore(val) {
+            val = val.trim();
+            if (val !== "" && !isNaN(val)) {
+                let num = parseFloat(val);
+                if (num > 100) num = 100;
+                if (num < 0) num = 0;
+                
+                // 判斷是否為整數
+                if (num % 1 === 0) {
+                    return num.toFixed(1); // 補上 .0
+                } else {
+                    return num.toString(); // 保留原本的小數點內容
+                }
+            }
+            return val;
+        }
+
+        // 格式化學分數輔助函數 (防爆防溢出)
+        function formatCredits(val) {
+            val = val.trim();
+            if (val !== "") {
+                let num = parseInt(val);
+                if (num > 5 || num < 0 || isNaN(num)) return "";
+                return num.toString();
+            }
+            return "";
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('theme-toast');
+            toast.textContent = message; toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
 
         const searchInput = document.getElementById('searchInput');
         const clearBtn = document.getElementById('clearSearchBtn');
         const appContainer = document.getElementById('appContainer');
         const noResults = document.getElementById('noResults');
+        const pageViews = document.querySelectorAll('.page-view');
+        const pageButtons = document.querySelectorAll('[data-page-target]');
+        const appHeader = document.getElementById('appHeader');
+        const mainElement = document.querySelector('main');
+        const navShell = document.getElementById('bottomNavShell');
+        
+        const pageOrder = ['home', 'tools', 'settings'];
+        let currentPage = 'home';
+        let swipeStartX = 0;
+        let swipeStartY = 0;
+        let sortableInstances = [];
+
+        function switchPage(page) {
+            if (!pageOrder.includes(page) || page === currentPage) { pageButtons.forEach(btn => btn.blur()); return; }
+            currentPage = page;
+            pageViews.forEach(view => { view.hidden = view.dataset.page !== page; });
+            pageButtons.forEach(btn => {
+                const isActive = btn.dataset.pageTarget === page;
+                btn.classList.toggle('is-active', isActive);
+                btn.setAttribute('aria-selected', String(isActive)); btn.blur();
+            });
+            appHeader.hidden = page !== 'home';
+            if (page !== 'home') searchInput.blur();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        pageButtons.forEach(btn => { btn.addEventListener('click', () => switchPage(btn.dataset.pageTarget)); });
 
         searchInput.addEventListener('focus', () => history.pushState({ search: true }, "", "#search"));
         searchInput.addEventListener('keyup', (e) => {
-            const term = e.target.value.trim();
-            renderCategories(term);
-            clearBtn.classList.toggle('hidden', !term);
+            const term = e.target.value.trim(); renderCategories(term); clearBtn.classList.toggle('hidden', !term);
         });
+        window.addEventListener('popstate', () => { if (window.location.hash !== "#search") window.history.back(); });
+        function clearSearch() { window.location.reload(); }
 
-        window.addEventListener('popstate', () => {
-            if (window.location.hash !== "#search") searchInput.blur();
-        });
+        // ====== Modal 核心邏輯 ======
+        function openModal(title) {
+            document.getElementById('modalTitle').textContent = title;
+            const modalBody = document.getElementById('modalBody');
+            const footerContainer = document.getElementById('modalFooterContainer');
+            
+            modalBody.innerHTML = ''; 
+            footerContainer.innerHTML = '';
+            modalBody.className = 'p-5 overflow-y-auto relative h-full'; 
+            
+            // 銷毀舊的 Sortable 實例
+            sortableInstances.forEach(instance => instance.destroy());
+            sortableInstances = [];
 
-        function clearSearch() {
-            searchInput.value = '';
-            renderCategories();
-            clearBtn.classList.add('hidden');
-            searchInput.focus();
+            // 控制 X 按鈕顯示與否 (僅工具 GPA 彈窗顯示)
+            const closeX = document.getElementById('modalCloseX');
+            if (closeX) closeX.classList.add('hidden');
+
+            if (title === '新增網站入口') {
+                renderAddSiteForm(modalBody);
+            } else if (title === '恢復出廠與儲存為預設值') {
+                renderResetForm(modalBody);
+            } else if (title === '刪除網站入口') {
+                renderDeleteForm(modalBody, footerContainer);
+            } else if (title === '調整入口排序') {
+                renderSortForm(modalBody, footerContainer);
+            } else if (title === 'GPA換算器') {
+                if (closeX) closeX.classList.remove('hidden');
+                renderGPAForm(modalBody, footerContainer);
+            }
+
+            const modal = document.getElementById('settingsModal');
+            modal.classList.remove('hidden');
+            void modal.offsetWidth; 
+            modal.classList.add('is-active');
+            document.body.style.overflow = 'hidden'; 
         }
 
-        // ===== [還原] iOS 回彈效果 =====
+        function closeModal() {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.remove('is-active');
+            document.body.style.overflow = '';
+            setTimeout(() => { 
+                modal.classList.add('hidden'); 
+                hideSecondaryConfirm(); 
+                // 關閉彈窗釋放與重置 GPA 資料
+                gpaState = {
+                    courses: [{ score: "", credits: "" }],
+                    currentIndex: 0,
+                    validationState: 'normal'
+                };
+            }, 200);
+        }
+
+        // --- 功能：GPA 換算器實作 ---
+        function renderGPAForm(container, footerContainer) {
+            container.innerHTML = `
+                <div class="space-y-5 pb-4">
+                    <!-- 第一行：學科筆數顯示 -->
+                    <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+                        <span class="text-xs font-bold text-[var(--text-sub)] uppercase tracking-wider">
+                            數據設定
+                        </span>
+                        <span id="gpaSubjectIndex" class="text-base font-bold text-[var(--brand-primary)] dark:text-[var(--brand-accent)] transition-all duration-200">
+                            第 01 門學科
+                        </span>
+                    </div>
+
+                    <!-- 第二行：兩個輸入方塊（加入 inputmode 召喚手機九宮格小數點數字鍵盤與純數字整數九宮格） -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold mb-1.5 text-[var(--text-sub)]">百分制分數 (0.0~100.0)</label>
+                            <input type="text" id="gpaScore" class="form-input" placeholder="例如：85.0" autocomplete="off" inputmode="decimal">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold mb-1.5 text-[var(--text-sub)]">學分數 (0~5)</label>
+                            <input type="text" id="gpaCredits" class="form-input" placeholder="例如：3" autocomplete="off" inputmode="numeric" pattern="[0-5]*">
+                        </div>
+                    </div>
+
+                    <!-- 第三行：上一筆與下一筆按鈕 -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <button type="button" id="gpaPrevBtn" class="py-2.5 rounded-xl bg-[var(--icon-bg)] text-[var(--text-main)] font-bold hover:opacity-80 transition-all flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-chevron-left text-xs"></i> 上一筆
+                        </button>
+                        <button type="button" id="gpaNextBtn" class="py-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5">
+                            下一筆 <i class="fa-solid fa-chevron-right text-xs"></i>
+                        </button>
+                    </div>
+
+                    <!-- 第四行：已完成筆數與總筆數 -->
+                    <div class="text-center py-1">
+                        <p id="gpaCompletionText" class="text-sm font-bold text-[var(--text-sub)] transition-colors duration-300">
+                            已完成 00 / 01
+                        </p>
+                    </div>
+
+                    <!-- 第五行：重新計算與計算按鈕 -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <button type="button" id="gpaResetBtn" class="py-2.5 rounded-xl bg-slate-500 text-white font-bold hover:opacity-90 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-slate-500/10">
+                            <i class="fa-solid fa-arrow-rotate-left text-xs"></i> 重新計算
+                        </button>
+                        <button type="button" id="gpaCalcBtn" class="py-2.5 rounded-xl bg-[var(--brand-primary)] dark:bg-[var(--brand-accent)] text-white font-bold hover:opacity-90 transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-[var(--brand-primary)]/20 dark:shadow-[var(--brand-accent)]/20">
+                            <i class="fa-solid fa-calculator text-xs"></i> 計算
+                        </button>
+                    </div>
+
+                    <!-- 第六行：加一條紅色註記（置左對齊） -->
+                    <div class="text-left pt-1 border-t border-[var(--border-color)]">
+                        <p class="text-[11px] font-semibold text-rose-500/90 dark:text-rose-400/90 leading-relaxed">
+                            * 註記：高科大之GPA對照標準為 113 年 6 月 5 日起版。
+                        </p>
+                    </div>
+
+                    <!-- 第七行：計算結果對照表格 -->
+                    <div id="gpaResultWrapper" class="hidden transition-all duration-300 animate-card">
+                        <div class="border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm bg-[var(--card-bg)]">
+                            <table class="w-full text-sm text-left border-collapse">
+                                <thead class="bg-[var(--icon-bg)] text-[var(--text-sub)] text-xs font-bold uppercase tracking-wider">
+                                    <tr>
+                                        <th class="px-4 py-3 border-b border-[var(--border-color)]">標準類別 (GPA 制度)</th>
+                                        <th class="px-4 py-3 border-b border-[var(--border-color)] text-right">計算結果</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-[var(--border-color)] text-[var(--text-main)] font-semibold">
+                                    <tr class="hover:bg-[var(--icon-bg)]/40 transition-colors">
+                                        <td class="px-4 py-3">4.3制 (NKUST)</td>
+                                        <td id="gpaNKUSTVal" class="px-4 py-3 text-right font-extrabold text-[var(--text-main)] text-base">0.00</td>
+                                    </tr>
+                                    <tr class="hover:bg-[var(--icon-bg)]/40 transition-colors">
+                                        <td class="px-4 py-3">4.3制 (Universal)</td>
+                                        <td id="gpaUniv43Val" class="px-4 py-3 text-right font-extrabold text-[var(--text-main)] text-base">0.00</td>
+                                    </tr>
+                                    <tr class="hover:bg-[var(--icon-bg)]/40 transition-colors">
+                                        <td class="px-4 py-3">4.0制 (Universal)</td>
+                                        <td id="gpaUniv40Val" class="px-4 py-3 text-right font-extrabold text-[var(--text-main)] text-base">0.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            footerContainer.innerHTML = ''; // 清除彈窗下方預設 footer 空間
+
+            // 綁定輸入元件
+            const scoreInput = container.querySelector('#gpaScore');
+            const creditsInput = container.querySelector('#gpaCredits');
+            const prevBtn = container.querySelector('#gpaPrevBtn');
+            const nextBtn = container.querySelector('#gpaNextBtn');
+            const resetBtn = container.querySelector('#gpaResetBtn');
+            const calcBtn = container.querySelector('#gpaCalcBtn');
+
+            // 核心儲存與格式化機制 (點擊導航或計算時即時對當前這筆做標準化格式處理)
+            function saveAndFormatCurrentInputs() {
+                let scoreVal = scoreInput.value.trim();
+                let creditsVal = creditsInput.value.trim();
+                if (scoreVal !== "") {
+                    scoreVal = formatScore(scoreVal);
+                    scoreInput.value = scoreVal; // 同步格式化到輸入框
+                }
+                if (creditsVal !== "") {
+                    creditsVal = formatCredits(creditsVal);
+                    creditsInput.value = creditsVal; // 同步格式化到輸入框
+                }
+                gpaState.courses[gpaState.currentIndex].score = scoreVal;
+                gpaState.courses[gpaState.currentIndex].credits = creditsVal;
+            }
+
+            // 百分制分數輸入過濾與自適應滑動限制
+            scoreInput.addEventListener('input', (e) => {
+                let val = e.target.value;
+                val = val.replace(/[^0-9.]/g, ''); // 只接受數字與小數點
+                const parts = val.split('.');
+                if (parts.length > 2) {
+                    val = parts[0] + '.' + parts.slice(1).join(''); // 限制僅一個小數點
+                }
+                
+                if (val !== "" && !isNaN(val)) {
+                    let num = parseFloat(val);
+                    if (num > 100) {
+                        // 優化體驗：若大於 100，直接變成最後輸入的那個位元
+                        val = val.slice(-1);
+                        if (val === '.') val = '';
+                    } else if (num < 0) {
+                        val = "0";
+                    }
+                }
+                e.target.value = val;
+                gpaState.courses[gpaState.currentIndex].score = val;
+                gpaState.validationState = 'normal';
+                syncGPAUI();
+            });
+
+            // 失焦時自動補上小數點
+            scoreInput.addEventListener('blur', () => {
+                saveAndFormatCurrentInputs();
+                syncGPAUI();
+            });
+
+            // 學分數輸入過濾與自適應滑動限制 (僅支援純整數 0~5)
+            creditsInput.addEventListener('input', (e) => {
+                let val = e.target.value;
+                val = val.replace(/[^0-9]/g, ''); // 只允許整數
+                
+                if (val !== "") {
+                    let num = parseInt(val);
+                    if (num > 5) {
+                        // 優化體驗：若大於 5，直接變為最後輸入的那個數字
+                        val = val.slice(-1);
+                        let lastNum = parseInt(val);
+                        if (lastNum > 5 || isNaN(lastNum)) {
+                            val = ""; // 若最後輸入的數字本身大於 5 則清空
+                        }
+                    }
+                }
+                e.target.value = val;
+                gpaState.courses[gpaState.currentIndex].credits = val;
+                gpaState.validationState = 'normal';
+                syncGPAUI();
+            });
+
+            // 鍵盤操作快捷鍵 (在任何一欄點擊 Enter 以迅速換下一筆學科，優化盲打體驗)
+            function handleGpaEnterKey(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const curScore = scoreInput.value.trim();
+                    const curCredits = creditsInput.value.trim();
+
+                    if (curScore !== "" && curCredits !== "") {
+                        // 兩者皆有填寫，先格式化並保存目前這欄
+                        saveAndFormatCurrentInputs();
+
+                        if (gpaState.currentIndex === gpaState.courses.length - 1) {
+                            gpaState.courses.push({ score: "", credits: "" });
+                        }
+                        gpaState.currentIndex++;
+                        syncGPAUI(true); // 帶有 true 參數將強制重整輸入框數值
+                        scoreInput.focus(); // 焦點自動重新導向回新一筆分數欄位
+                    } else if (curScore !== "" && curCredits === "") {
+                        // 若只有分數已填而學分數空白，按 Enter 自動格式化分數並切換焦點至學分數欄
+                        scoreInput.value = formatScore(curScore);
+                        gpaState.courses[gpaState.currentIndex].score = scoreInput.value;
+                        creditsInput.focus();
+                    }
+                }
+            }
+
+            scoreInput.addEventListener('keydown', handleGpaEnterKey);
+            creditsInput.addEventListener('keydown', handleGpaEnterKey);
+
+            // 上一筆事件
+            prevBtn.addEventListener('click', () => {
+                if (gpaState.currentIndex > 0) {
+                    // 同步前一筆前，先將當前編輯內容做格式化存檔
+                    saveAndFormatCurrentInputs();
+                    
+                    // Bug 修正：如果使用者在最末端點擊「下一筆」，但完全沒輸入任何數據便想返回，自動將該多餘的最後一筆空科目移除
+                    if (gpaState.currentIndex === gpaState.courses.length - 1) {
+                        const lastCourse = gpaState.courses[gpaState.currentIndex];
+                        if (lastCourse.score === "" && lastCourse.credits === "") {
+                            gpaState.courses.pop();
+                        }
+                    }
+                    gpaState.currentIndex--;
+                    syncGPAUI(true); // 強制更新界面欄位並強制刷新數值
+                }
+            });
+
+            // 下一筆事件
+            nextBtn.addEventListener('click', () => {
+                const curScore = scoreInput.value.trim();
+                const curCredits = creditsInput.value.trim();
+                if (curScore !== "" && curCredits !== "") {
+                    // 同步到前一筆並先格式化
+                    saveAndFormatCurrentInputs();
+
+                    if (gpaState.currentIndex === gpaState.courses.length - 1) {
+                        gpaState.courses.push({ score: "", credits: "" });
+                    }
+                    gpaState.currentIndex++;
+                    syncGPAUI(true); // 強制更新界面欄位 (解決覆蓋、舊數值殘留 bug)
+                }
+            });
+
+            // 重新計算 (全部歸零清除，包含所有驗證狀態)
+            resetBtn.addEventListener('click', () => {
+                gpaState = {
+                    courses: [{ score: "", credits: "" }],
+                    currentIndex: 0,
+                    validationState: 'normal'
+                };
+                scoreInput.value = "";
+                creditsInput.value = "";
+                const resultWrapper = container.querySelector('#gpaResultWrapper');
+                if (resultWrapper) resultWrapper.classList.add('hidden');
+                syncGPAUI(true);
+                showToast('數據已全部重新計算重置');
+            });
+
+            // 計算結果邏輯
+            calcBtn.addEventListener('click', () => {
+                // 計算前先對當前這筆做完好存檔與格式化
+                saveAndFormatCurrentInputs();
+
+                // Bug 修正：若最後一筆完全是空白（可能用戶在最後一筆點擊「下一筆」產生新的一列，但並不需要），在計算前自動清除這列
+                if (gpaState.courses.length > 1) {
+                    const lastIndex = gpaState.courses.length - 1;
+                    const lastCourse = gpaState.courses[lastIndex];
+                    if (lastCourse.score === "" && lastCourse.credits === "") {
+                        gpaState.courses.pop();
+                        // 如果當前指針在最後一個被彈出的物件上，把游標退回前一項
+                        if (gpaState.currentIndex > lastIndex - 1) {
+                            gpaState.currentIndex = lastIndex - 1;
+                        }
+                    }
+                }
+
+                // 檢查完整性
+                let firstIncompleteIndex = -1;
+                for (let i = 0; i < gpaState.courses.length; i++) {
+                    const course = gpaState.courses[i];
+                    if (course.score === "" || course.credits === "") {
+                        firstIncompleteIndex = i;
+                        break;
+                    }
+                }
+
+                if (firstIncompleteIndex !== -1) {
+                    gpaState.validationState = 'error';
+                    syncGPAUI(true);
+                    const paddedIndex = String(firstIncompleteIndex + 1).padStart(2, '0');
+                    showToast(`第 ${paddedIndex} 門學科 缺乏資料`);
+                    
+                    gpaState.currentIndex = firstIncompleteIndex;
+                    syncGPAUI(true);
+                    return;
+                }
+
+                // 檢查總學分是否為 0
+                let totalCredits = 0;
+                gpaState.courses.forEach(c => {
+                    totalCredits += parseInt(c.credits);
+                });
+
+                if (totalCredits === 0) {
+                    showToast('總學分不可為 0');
+                    return;
+                }
+
+                // 開始高精度浮點計算
+                let sumNKUST = 0;
+                let sumUniv43 = 0;
+                let sumUniv40 = 0;
+
+                gpaState.courses.forEach(c => {
+                    const score = parseFloat(c.score);
+                    const cred = parseInt(c.credits);
+
+                    sumNKUST += getNKUST_GPA(score) * cred;
+                    sumUniv43 += getUniversal43_GPA(score) * cred;
+                    sumUniv40 += getUniversal40_GPA(score) * cred;
+                });
+
+                const gpaNKUST = (sumNKUST / totalCredits).toFixed(2);
+                const gpaUniv43 = (sumUniv43 / totalCredits).toFixed(2);
+                const gpaUniv40 = (sumUniv40 / totalCredits).toFixed(2);
+
+                container.querySelector('#gpaNKUSTVal').textContent = gpaNKUST;
+                container.querySelector('#gpaUniv43Val').textContent = gpaUniv43;
+                container.querySelector('#gpaUniv40Val').textContent = gpaUniv40;
+
+                const resultWrapper = container.querySelector('#gpaResultWrapper');
+                if (resultWrapper) {
+                    resultWrapper.classList.remove('hidden');
+                }
+
+                gpaState.validationState = 'success';
+                syncGPAUI(true);
+                showToast('GPA 計算成功');
+            });
+
+            // 執行初始化界面同步
+            syncGPAUI(true);
+        }
+
+        // --- 同步 GPA 換算器 UI 狀態 (修正：加入 forceValueSync 控制強制清空/載入邏輯) ---
+        function syncGPAUI(forceValueSync = false) {
+            const curSubjectIndexEl = document.getElementById('gpaSubjectIndex');
+            const scoreInput = document.getElementById('gpaScore');
+            const creditsInput = document.getElementById('gpaCredits');
+            const prevBtn = document.getElementById('gpaPrevBtn');
+            const nextBtn = document.getElementById('gpaNextBtn');
+            const completionTextEl = document.getElementById('gpaCompletionText');
+
+            if (!curSubjectIndexEl) return;
+
+            const curIndex = gpaState.currentIndex;
+            const curCourse = gpaState.courses[curIndex] || { score: "", credits: "" };
+
+            // 1. 更新第 nn 門學科標題
+            curSubjectIndexEl.textContent = `第 ${String(curIndex + 1).padStart(2, '0')} 門學科`;
+
+            // 2. 同步數值至輸入欄位並對當前值做強製格式化，確保顯示為浮點數而非整數
+            if (forceValueSync || document.activeElement !== scoreInput) {
+                scoreInput.value = formatScore(curCourse.score);
+            }
+            if (forceValueSync || document.activeElement !== creditsInput) {
+                creditsInput.value = curCourse.credits;
+            }
+
+            // 3. 上一筆按鈕狀態
+            if (curIndex === 0) {
+                prevBtn.disabled = true;
+                prevBtn.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
+            } else {
+                prevBtn.disabled = false;
+                prevBtn.classList.remove('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
+            }
+
+            // 4. 下一筆按鈕狀態 (必填完才可按)
+            const isCurrentComplete = curCourse.score !== "" && curCourse.credits !== "";
+            if (isCurrentComplete) {
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                nextBtn.classList.add('bg-[var(--brand-primary)]', 'dark:bg-[var(--brand-accent)]', 'text-white');
+                nextBtn.classList.remove('bg-[var(--icon-bg)]', 'text-[var(--text-main)]');
+            } else {
+                nextBtn.disabled = true;
+                nextBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                nextBtn.classList.remove('bg-[var(--brand-primary)]', 'dark:bg-[var(--brand-accent)]', 'text-white');
+                nextBtn.classList.add('bg-[var(--icon-bg)]', 'text-[var(--text-main)]');
+            }
+
+            // 5. 計算已完成筆數與總筆數 (nn / mm)
+            const nn = gpaState.courses.filter(c => c.score !== "" && c.credits !== "").length;
+            const mm = gpaState.courses.length;
+
+            completionTextEl.textContent = `已完成 ${String(nn).padStart(2, '0')} / ${String(mm).padStart(2, '0')}`;
+
+            // 6. 動態變更已完成比例的文字外觀顏色
+            completionTextEl.className = "text-sm font-bold transition-colors duration-300";
+            if (gpaState.validationState === 'error') {
+                completionTextEl.classList.add('text-rose-600', 'dark:text-rose-500'); // 不太亮的紅色
+            } else if (nn === mm) {
+                completionTextEl.classList.add('text-emerald-600', 'dark:text-emerald-500'); // 不太亮的綠色
+            } else {
+                completionTextEl.classList.add('text-[var(--text-sub)]');
+            }
+        }
+
+        // --- 功能 1：新增網站入口 ---
+        function renderAddSiteForm(container) {
+            let selectedIcon = '';
+            const catOptions = categories.map((cat, idx) => `<option value="${idx}">${cat.title}</option>`).join('');
+            const iconsHTML = iconList.map(icon => `<button type="button" class="icon-btn" data-icon="${icon}"><i class="${icon}"></i></button>`).join('');
+
+            container.innerHTML = `
+                <form id="addSiteForm" class="space-y-4">
+                    <div><label class="block text-sm font-bold mb-1.5 text-[var(--text-main)]">選擇區塊</label><select id="siteCategory" class="form-input cursor-pointer">${catOptions}</select></div>
+                    <div><label class="block text-sm font-bold mb-1.5 text-[var(--text-main)]">卡片標題</label><input type="text" id="siteName" class="form-input" placeholder="例如：學生教務系統" required autocomplete="off"></div>
+                    <div><label class="block text-sm font-bold mb-1.5 text-[var(--text-main)]">功能描述</label><input type="text" id="siteDesc" class="form-input" placeholder="例如：課表/成績/缺曠" required autocomplete="off"></div>
+                    <div><label class="block text-sm font-bold mb-1.5 text-[var(--text-main)]">網址 URL</label><input type="url" id="siteUrl" class="form-input" placeholder="https://..." required autocomplete="off"></div>
+                    <div><label class="block text-sm font-bold mb-1.5 text-[var(--text-main)]">選擇圖標</label><div class="icon-grid" id="iconPicker">${iconsHTML}</div></div>
+                    <div class="pt-4 flex gap-3 pb-2">
+                        <button type="button" onclick="closeModal()" class="flex-1 py-2.5 rounded-xl bg-[var(--icon-bg)] text-[var(--text-main)] font-bold hover:opacity-80 transition-opacity">取消</button>
+                        <button type="submit" class="flex-1 py-2.5 rounded-xl bg-[var(--brand-primary)] dark:bg-[var(--brand-accent)] text-white font-bold hover:opacity-90 shadow-lg shadow-[var(--brand-primary)]/20 dark:shadow-[var(--brand-accent)]/20">確認新增</button>
+                    </div>
+                </form>
+            `;
+
+            const iconBtns = container.querySelectorAll('.icon-btn');
+            iconBtns.forEach(btn => {
+                btn.addEventListener('click', () => { iconBtns.forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); selectedIcon = btn.dataset.icon; });
+            });
+            if(iconBtns.length > 0) iconBtns[0].click();
+
+            document.getElementById('addSiteForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const catIdx = document.getElementById('siteCategory').value;
+                const name = document.getElementById('siteName').value.trim();
+                const desc = document.getElementById('siteDesc').value.trim();
+                const url = document.getElementById('siteUrl').value.trim();
+
+                const exists = categories[catIdx].items.some(item =>
+                    item.url === url ||
+                    item.name.trim().toLowerCase() === name.toLowerCase()
+                );
+
+                if (exists) {	
+                    showToast("此網站入口已存在");
+                    return;
+                }
+
+                try {
+                    const parsed = new URL(url);
+
+                    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+                        throw new Error();
+                    }
+                } catch {
+                    showToast("請輸入有效網址");
+                    return;
+                }
+
+                categories[catIdx].items.push({ name, desc, url, icon: selectedIcon });
+                saveCategories(); renderCategories(document.getElementById('searchInput').value.trim()); closeModal(); showToast('已成功新增入口');
+            });
+        }
+
+        // --- 功能 2：恢復出廠與儲存為預設值 ---
+        function renderResetForm(container) {
+            const hasCustomDefault = !!localStorage.getItem('nkust_portal_custom_default');
+            let html = `<div class="flex flex-col gap-3 py-2">`;
+            
+            if (hasCustomDefault) {
+                html += `
+                    <button type="button" onclick="saveCurrentAsDefault()" class="setting-card w-full p-4 flex flex-col justify-center text-left cursor-pointer">
+                        <h3 class="font-bold text-[var(--text-main)] text-[15px]">儲存為預設值</h3>
+                        <p class="text-[13px] text-[var(--text-sub)] mt-0.5 whitespace-normal">覆蓋現有的自訂預設，並將目前的卡片與排版儲存為新預設</p>
+                    </button>
+                    
+                    <button type="button" onclick="restoreToCustomDefault()" class="setting-card w-full p-4 flex flex-col justify-center text-left cursor-pointer">
+                        <h3 class="font-bold text-[var(--text-main)] text-[15px]">還原自訂預設</h3>
+                        <p class="text-[13px] text-[var(--text-sub)] mt-0.5 whitespace-normal">還原至先前儲存的自訂預設配置與排列</p>
+                    </button>
+                    
+                    <button type="button" onclick="showFactoryResetConfirm()" class="setting-card w-full p-4 flex flex-col justify-center text-left cursor-pointer">
+                        <h3 class="font-bold text-red-600 dark:text-red-400 text-[15px]">恢復出廠狀態</h3>
+                        <p class="text-[13px] text-[var(--text-sub)] mt-0.5 whitespace-normal">清除所有卡片配置及自訂預設值，恢復至出廠狀態</p>
+                    </button>
+                    
+                    <button type="button" onclick="closeModal()" class="setting-card w-full p-4 flex flex-col justify-center text-left cursor-pointer">
+                        <h3 class="font-bold text-[var(--text-main)] text-[15px]">取消</h3>
+                        <p class="text-[13px] text-[var(--text-sub)] mt-0.5 whitespace-normal">保持現狀，不進行任何變更</p>
+                    </button>
+                `;
+            } else {
+                html += `
+                    <button type="button" onclick="saveCurrentAsDefault()" class="setting-card w-full p-4 flex flex-col justify-center text-left cursor-pointer">
+                        <h3 class="font-bold text-[var(--text-main)] text-[15px]">儲存為預設值</h3>
+                        <p class="text-[13px] text-[var(--text-sub)] mt-0.5 whitespace-normal">將目前首頁卡片、捷徑與順序儲存為預設值</p>
+                    </button>
+                    
+                    <button type="button" onclick="showFactoryResetConfirm()" class="setting-card w-full p-4 flex flex-col justify-center text-left cursor-pointer">
+                        <h3 class="font-bold text-red-600 dark:text-red-400 text-[15px]">恢復出廠狀態</h3>
+                        <p class="text-[13px] text-[var(--text-sub)] mt-0.5 whitespace-normal">清除所有卡片配置及自訂預設值，恢復至出廠狀態</p>
+                    </button>
+                    
+                    <button type="button" onclick="closeModal()" class="setting-card w-full p-4 flex flex-col justify-center text-left cursor-pointer">
+                        <h3 class="font-bold text-[var(--text-main)] text-[15px]">取消</h3>
+                        <p class="text-[13px] text-[var(--text-sub)] mt-0.5 whitespace-normal">保持現狀，不進行任何變更</p>
+                    </button>
+                `;
+            }
+            
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function saveCurrentAsDefault() {
+            localStorage.setItem('nkust_portal_custom_default', JSON.stringify(categories));
+            closeModal();
+            switchPage('home');
+            showToast('已儲存當前版面至自訂預設');
+        }
+
+        function restoreToCustomDefault() {
+            const savedDefault = localStorage.getItem('nkust_portal_custom_default');
+            if (savedDefault) {
+                categories = JSON.parse(savedDefault);
+                saveCategories(); 
+                renderCategories(document.getElementById('searchInput').value.trim());
+                closeModal();
+                switchPage('home');
+                showToast('已恢復至自訂預設版面');
+            } else {
+                showToast('未找到自訂預設設定');
+            }
+        }
+
+        function showFactoryResetConfirm() {
+            showSecondaryConfirm(
+                'fa-solid fa-triangle-exclamation',
+                '確認要恢復出廠設定？',
+                '此動作會清除所有自訂的入口及配置，並還原至出廠狀態。',
+                '確認恢復',
+                restoreFactory
+            );
+        }
+
+        function restoreFactory() {
+            localStorage.removeItem('nkust_portal_categories');
+            localStorage.removeItem('nkust_portal_custom_default');
+            categories = JSON.parse(JSON.stringify(defaultCategories));
+            renderCategories();
+            closeModal();
+            switchPage('home');
+            showToast('已恢復為出廠狀態');
+        }
+
+        // --- 功能 3：刪除網站入口 (多選) ---
+        function renderDeleteForm(container, footerContainer) {
+            container.classList.add('modal-body-scroll'); 
+            
+            let html = '';
+            categories.forEach((cat, cIdx) => {
+                html += `<div class="mb-6"><h4 class="font-bold text-sm text-[var(--text-sub)] mb-2 px-1 tracking-wider">${cat.title}</h4><ul class="list-group-ul">`;
+                cat.items.forEach((item, iIdx) => {
+                    html += `
+                        <li class="list-item-row flex items-center py-3 cursor-pointer" onclick="toggleDeleteItem(this)" data-cidx="${cIdx}" data-iidx="${iIdx}">
+                            <div class="circle-checkbox mr-3 flex-shrink-0"><i class="fa-solid fa-check"></i></div>
+                            <div class="flex flex-col min-w-0"><span class="font-bold text-[15px] text-[var(--text-main)] truncate">${item.name}</span></div>
+                        </li>
+                    `;
+                });
+                if(cat.items.length === 0) html += `<li class="text-xs text-[var(--text-sub)] italic py-2 px-5">此區塊目前無項目</li>`;
+                html += `</ul></div>`;
+            });
+            container.innerHTML = html;
+
+            footerContainer.innerHTML = `
+                <div class="floating-action-bar">
+                    <button type="button" onclick="closeModal()" class="flex-1 py-2.5 rounded-xl bg-[var(--card-bg)] border border-[var(--border-color)] text-[var(--text-main)] font-bold hover:opacity-80 transition-all shadow-[0_8px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.4)]">取消</button>
+                    <button type="button" id="delConfirmBtn" onclick="showDeleteConfirm()" class="hidden flex-1 py-2.5 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all shadow-[0_8px_20px_rgba(239,68,68,0.3)]">刪除</button>
+                </div>
+            `;
+        }
+
+        function toggleDeleteItem(el) {
+            el.classList.toggle('is-checked');
+            const checkedCount = document.querySelectorAll('.list-item-row.is-checked').length;
+            const delBtn = document.getElementById('delConfirmBtn');
+            
+            if (checkedCount > 0) {
+                delBtn.classList.remove('hidden');
+            } else {
+                delBtn.classList.add('hidden');
+            }
+        }
+
+        function showDeleteConfirm() {
+            showSecondaryConfirm(
+                'fa-solid fa-trash-can',
+                '確認刪除勾選項目？',
+                '刪除後將無法還原。',
+                '確認刪除',
+                executeDelete
+            );
+        }
+
+        function executeDelete() {
+            const itemsToRemove = [];
+            document.querySelectorAll('.list-item-row.is-checked').forEach(el => {
+                itemsToRemove.push({ cIdx: parseInt(el.dataset.cidx), iIdx: parseInt(el.dataset.iidx) });
+            });
+            itemsToRemove.sort((a,b) => b.iIdx - a.iIdx).forEach(pos => {
+                categories[pos.cIdx].items.splice(pos.iIdx, 1);
+            });
+            
+            saveCategories(); 
+            renderCategories(document.getElementById('searchInput').value.trim()); 
+            closeModal(); 
+            showToast('已成功刪除勾選項目');
+        }
+
+        // --- 通用二次確認疊加彈窗控制邏輯 ---
+        function showSecondaryConfirm(iconClass, title, desc, confirmText, onConfirm) {
+            const overlay = document.getElementById('secondaryConfirmOverlay');
+            const box = document.getElementById('secondaryConfirmBox');
+            
+            document.getElementById('secondaryConfirmIconInner').className = iconClass;
+            document.getElementById('secondaryConfirmTitle').textContent = title;
+            document.getElementById('secondaryConfirmDesc').textContent = desc;
+            
+            const btn = document.getElementById('secondaryConfirmBtn');
+            btn.textContent = confirmText;
+            
+            btn.onclick = () => {
+                onConfirm();
+                hideSecondaryConfirm();
+            };
+            
+            overlay.classList.remove('hidden');
+            void overlay.offsetWidth;
+            overlay.classList.add('opacity-100');
+            box.classList.remove('scale-95');
+            box.classList.add('scale-100');
+        }
+
+        function hideSecondaryConfirm() {
+            const overlay = document.getElementById('secondaryConfirmOverlay');
+            const box = document.getElementById('secondaryConfirmBox');
+            if (!overlay) return;
+            overlay.classList.remove('opacity-100');
+            box.classList.remove('scale-100');
+            box.classList.add('scale-95');
+            setTimeout(() => overlay.classList.add('hidden'), 200);
+        }
+
+        // --- 功能 4：調整入口排序 ---
+        function renderSortForm(container, footerContainer) {
+            container.classList.add('modal-body-scroll'); 
+            
+            let html = '';
+            categories.forEach((cat, cIdx) => {
+                html += `<div class="mb-6"><h4 class="font-bold text-sm text-[var(--text-sub)] mb-2 px-1 tracking-wider">${cat.title}</h4>`;
+                html += `<ul id="sort-cat-${cIdx}" class="list-group-ul min-h-[10px] pb-2">`;
+                cat.items.forEach((item, iIdx) => {
+                    const safeItemStr = JSON.stringify(item).replace(/"/g, '&quot;'); 
+                    html += `
+                        <li class="list-item-row flex items-center py-3 bg-[var(--card-bg)]" data-item="${safeItemStr}">
+                            <div class="drag-handle text-lg mr-2"><i class="fa-solid fa-bars"></i></div>
+                            <div class="flex flex-col min-w-0"><span class="font-bold text-[15px] text-[var(--text-main)] truncate">${item.name}</span></div>
+                        </li>
+                    `;
+                });
+                html += `</ul></div>`;
+            });
+            container.innerHTML = html;
+
+            footerContainer.innerHTML = `
+                <div class="floating-action-bar">
+                    <button type="button" onclick="closeModal()" class="flex-1 py-2.5 rounded-xl bg-[var(--card-bg)] border border-[var(--border-color)] text-[var(--text-main)] font-bold hover:opacity-80 transition-all shadow-[0_8px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.4)]">取消</button>
+                    <button type="button" onclick="executeSort()" class="flex-1 py-2.5 rounded-xl bg-[var(--brand-primary)] dark:bg-[var(--brand-accent)] text-white font-bold hover:opacity-90 transition-all shadow-[0_8px_20px_rgba(0,45,114,0.3)] dark:shadow-[0_8px_20px_rgba(217,119,6,0.3)]">確認調整</button>
+                </div>
+            `;
+
+            const modalBodyScroll = document.getElementById('modalBody');
+            categories.forEach((_, cIdx) => {
+                const el = document.getElementById(`sort-cat-${cIdx}`);
+                const sortable = new Sortable(el, {
+                    group: 'shared',
+                    animation: 250,  
+                    handle: '.drag-handle',
+                    ghostClass: 'sortable-ghost',
+                    dragClass: 'sortable-drag',
+                    fallbackOnBody: true,
+                    swapThreshold: 0.65,
+                    scroll: modalBodyScroll, 
+                    scrollSensitivity: 100, 
+                    scrollSpeed: 20, 
+                    bubbleScroll: true, 
+                    forceFallback: true, 
+                    fallbackTolerance: 3 
+                });
+                sortableInstances.push(sortable);
+            });
+        }
+
+        function executeSort() {
+            const newCategories = JSON.parse(JSON.stringify(categories));
+            newCategories.forEach((cat, idx) => {
+                const listEl = document.getElementById(`sort-cat-${idx}`);
+                const items = [];
+                listEl.querySelectorAll('.list-item-row').forEach(li => {
+                    if (li.dataset.item) {
+                        items.push(JSON.parse(li.dataset.item));
+                    }
+                });
+                cat.items = items;
+            });
+            
+            categories = newCategories;
+            saveCategories(); 
+            renderCategories(document.getElementById('searchInput').value.trim()); 
+            switchPage('home'); 
+            closeModal(); 
+            showToast('已成功儲存排序');
+        }
+
+        // ===== 共用左右滑動切換頁面 (主體與膠囊) =====
+        function handleSwipeStart(e) {
+            // 避免在設定或 GPA 換算器彈窗開啟時觸發滑動切換
+            const modal = document.getElementById('settingsModal');
+            if (modal && !modal.classList.contains('hidden')) return;
+
+            // 避免滑動表單輸入框、選單、圖標按鈕或拖拉排序手把時誤觸
+            if (e.touches.length !== 1 || e.target.closest('input, a, button, select, textarea, .icon-btn, .drag-handle, .list-item-row')) return;
+            
+            swipeStartX = e.touches[0].clientX;
+            swipeStartY = e.touches[0].clientY;
+        }
+
+        function handleSwipeEnd(e) {
+            if (!swipeStartX || e.changedTouches.length !== 1) return;
+            const deltaX = e.changedTouches[0].clientX - swipeStartX;
+            const deltaY = e.changedTouches[0].clientY - swipeStartY;
+            swipeStartX = swipeStartY = 0;
+
+            // 滑動靈敏度門檻 (55px)，且 X 軸滑動距離需顯著大於 Y 軸滑動 (避免上下捲動網頁時誤判)
+            if (Math.abs(deltaX) < 55 || Math.abs(deltaX) < Math.abs(deltaY) * 1.35) return;
+            
+            const currentIndex = pageOrder.indexOf(currentPage);
+            const nextIndex = deltaX < 0 ? currentIndex + 1 : currentIndex - 1;
+            if (nextIndex >= 0 && nextIndex < pageOrder.length) {
+                switchPage(pageOrder[nextIndex]);
+            }
+        }
+
+        mainElement.addEventListener('touchstart', handleSwipeStart, { passive: true });
+        mainElement.addEventListener('touchend', handleSwipeEnd, { passive: true });
+        navShell.addEventListener('touchstart', handleSwipeStart, { passive: true });
+        navShell.addEventListener('touchend', handleSwipeEnd, { passive: true });
+
+        // ===== 穩定版下拉回彈效果 (包含膠囊連動) =====
         let pullStartY = 0;
         let isPulling = false;
         let currentPull = 0;
         let animationFrameId = null;
-        const mainElement = document.querySelector('main');
-        const headerElement = document.querySelector('header');
-        const welcomeBanner = document.getElementById('welcomeBanner');
-        const MAX_PULL = 100;
-        
+        const MAX_PULL = 65; 
+
         function applyPullEffect(pullDistance) {
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             animationFrameId = requestAnimationFrame(() => {
-                const damping = 0.4;
-                const resistance = Math.pow(pullDistance / MAX_PULL, 0.7);
+                const damping = 0.35; 
+                const resistance = Math.pow(pullDistance / MAX_PULL, 0.75);
                 const actualPull = pullDistance * damping * (1 - resistance);
                 currentPull = Math.max(0, Math.min(actualPull, MAX_PULL));
                 
-                const scaleY = 1 + (currentPull / 400);
-                const scaleX = 1 - (currentPull / 2000);
-                const bannerScale = 1 + (currentPull / 600);
+                const scaleY = 1 + (currentPull / 500);
+                const scaleX = 1 - (currentPull / 2500);
                 
+                headerElement = document.querySelector('header');
                 headerElement.style.transform = `translate3d(0, ${currentPull}px, 0) scale(${scaleX}, ${scaleY})`;
                 mainElement.style.transform = `translate3d(0, ${currentPull}px, 0)`;
-                welcomeBanner.style.transform = `translate3d(0, 0, 0) scale(${bannerScale})`;
-                welcomeBanner.style.transformOrigin = 'top center';
+                
+                const welcomeBanner = document.getElementById('welcomeBanner');
+                if (currentPage === 'home' && welcomeBanner) {
+                    const bannerScale = 1 + (currentPull / 800);
+                    welcomeBanner.style.transform = `translate3d(0, 0, 0) scale(${bannerScale})`;
+                    welcomeBanner.style.transformOrigin = 'top center';
+                }
+
+                navShell.style.transform = `translate3d(-50%, ${currentPull}px, 0)`;
                 animationFrameId = null;
             });
         }
         
         function releasePullEffect() {
             if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+            const headerElement = document.querySelector('header');
+            const welcomeBanner = document.getElementById('welcomeBanner');
             headerElement.classList.add('bouncing');
             mainElement.classList.add('bouncing');
-            welcomeBanner.classList.add('bouncing');
+            if (welcomeBanner) welcomeBanner.classList.add('bouncing');
+            navShell.classList.add('bouncing');
+            
             headerElement.style.transform = 'translate3d(0, 0, 0) scale(1, 1)';
             mainElement.style.transform = 'translate3d(0, 0, 0)';
-            welcomeBanner.style.transform = 'translate3d(0, 0, 0) scale(1)';
+            if (welcomeBanner) welcomeBanner.style.transform = 'translate3d(0, 0, 0) scale(1)';
+            navShell.style.transform = 'translate3d(-50%, 0, 0)'; 
+            
             setTimeout(() => {
                 headerElement.classList.remove('bouncing', 'pulling');
                 mainElement.classList.remove('bouncing', 'pulling');
-                welcomeBanner.classList.remove('bouncing', 'pulling');
-                headerElement.style.transform = '';
-                mainElement.style.transform = '';
-                welcomeBanner.style.transform = '';
-                welcomeBanner.style.transformOrigin = '';
+                if (welcomeBanner) {
+                    welcomeBanner.classList.remove('bouncing', 'pulling');
+                    welcomeBanner.style.transform = ''; welcomeBanner.style.transformOrigin = '';
+                }
+                navShell.classList.remove('bouncing', 'pulling');
+                
+                headerElement.style.transform = ''; mainElement.style.transform = '';
+                navShell.style.transform = ''; 
                 currentPull = 0;
             }, 400);
         }
@@ -397,9 +1447,11 @@
             if (scrollY <= 5) {
                 isPulling = true;
                 pullStartY = e.touches[0].clientY;
-                headerElement.classList.add('pulling');
+                document.querySelector('header').classList.add('pulling');
                 mainElement.classList.add('pulling');
-                welcomeBanner.classList.add('pulling');
+                const welcomeBanner = document.getElementById('welcomeBanner');
+                if (welcomeBanner) welcomeBanner.classList.add('pulling');
+                navShell.classList.add('pulling');
             }
         }, { passive: true });
         
@@ -407,241 +1459,70 @@
             if (!isPulling) return;
             const scrollY = window.scrollY || window.pageYOffset;
             if (scrollY <= 5) {
-                const currentY = e.touches[0].clientY;
-                const pullDistance = currentY - pullStartY;
+                const pullDistance = e.touches[0].clientY - pullStartY;
                 if (pullDistance > 0) applyPullEffect(pullDistance);
             } else if (currentPull > 0) {
-                isPulling = false;
-                releasePullEffect();
+                isPulling = false; releasePullEffect();
             }
         }, { passive: true });
         
-        window.addEventListener('touchend', () => {
-            if (isPulling && currentPull > 0) releasePullEffect();
-            isPulling = false;
-        }, { passive: true });
-        
-        window.addEventListener('touchcancel', () => {
-            if (isPulling && currentPull > 0) releasePullEffect();
-            isPulling = false;
-        }, { passive: true });
+        window.addEventListener('touchend', () => { if (isPulling && currentPull > 0) releasePullEffect(); isPulling = false; }, { passive: true });
+        window.addEventListener('touchcancel', () => { if (isPulling && currentPull > 0) releasePullEffect(); isPulling = false; }, { passive: true });
 
-        // ===== 觸控與點擊管理 (解決沾黏) =====
-        let currentActiveCard = null;
-        let isScrolling = false;
-        let touchStartY_Scroll = 0;
-        let hasMovedVertically = false;
-
-        function clearAllActiveStates() {
-            document.querySelectorAll('.app-card').forEach(card => card.classList.remove('is-pressing'));
-            currentActiveCard = null;
-        }
-        
-        function setActiveCard(card) {
-            if (card !== currentActiveCard) {
-                if (currentActiveCard) currentActiveCard.classList.remove('is-pressing');
-                if (card) {
-                    card.classList.add('is-pressing');
-                    currentActiveCard = card;
-                } else {
-                    currentActiveCard = null;
-                }
-            }
-        }
-
-        function getCardAtPoint(x, y) {
-            const element = document.elementFromPoint(x, y);
-            if (!element) return null;
-            return element.closest('.app-card');
-        }
-
-        function attachTouchHandlers() {
-            const container = document.getElementById('appContainer');
-            
-            container.addEventListener('touchstart', function(e) {
-                isScrolling = false;
-                hasMovedVertically = false;
-                touchStartY_Scroll = e.touches[0].clientY;
-                
-                const touch = e.touches[0];
-                const card = getCardAtPoint(touch.clientX, touch.clientY);
-                if (card) setActiveCard(card);
-            }, { passive: true });
-
-            container.addEventListener('touchmove', function(e) {
-                if (isScrolling) return;
-
-                const touch = e.touches[0];
-                const moveY = Math.abs(touch.clientY - touchStartY_Scroll);
-                
-                if (moveY > 10) { 
-                    hasMovedVertically = true;
-                    isScrolling = true;
-                    clearAllActiveStates();
-                    return;
-                }
-                
-                if (!hasMovedVertically) {
-                    const card = getCardAtPoint(touch.clientX, touch.clientY);
-                    if (card) setActiveCard(card);
-                    else if (!card && currentActiveCard) clearAllActiveStates();
-                }
-            }, { passive: true });
-
-            container.addEventListener('touchend', function(e) {
-                if (!isScrolling && currentActiveCard) {
-                    setTimeout(clearAllActiveStates, 100);
-                } else {
-                    clearAllActiveStates();
-                }
-                isScrolling = false;
-                hasMovedVertically = false;
-            }, { passive: true });
-
-            container.addEventListener('touchcancel', clearAllActiveStates, { passive: true });
-        }
-
-        // 強制大掃除 (修復返回沾黏)
-        function forceCleanup() {
-            setTimeout(() => {
-                clearAllActiveStates();
-                if (document.activeElement) document.activeElement.blur();
-                document.querySelectorAll('.app-card').forEach(el => el.blur());
-            }, 10); // 這裡留一點點延遲，以防 pageshow 觸發太早
-        }
-        
-        window.addEventListener('pageshow', forceCleanup);
-        window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') forceCleanup(); });
-        window.addEventListener('blur', forceCleanup);
-        window.addEventListener('focus', forceCleanup);
-
+        // ===== 背景渲染與主頁渲染 =====
         function renderCategories(filterText = "") {
-            appContainer.innerHTML = '';
-            let hasResults = false;
-            let delayCounter = 2;
-
+            appContainer.innerHTML = ''; let hasResults = false; let delayCounter = 2;
             categories.forEach(cat => {
-                const filteredItems = cat.items.filter(item => 
-                    (item.name + item.desc).toLowerCase().includes(filterText.toLowerCase())
-                );
+                const filteredItems = cat.items.filter(item => (item.name + item.desc).toLowerCase().includes(filterText.toLowerCase()));
+                if (filteredItems.length > 0 || cat.items.length === 0 && filterText === "") { 
+                    if(filteredItems.length > 0) hasResults = true;
+                    if(filteredItems.length === 0 && filterText !== "") return;
 
-                if (filteredItems.length > 0) {
-                    hasResults = true;
                     const section = document.createElement('div');
-                    section.className = "animate-card";
-                    section.style.animationDelay = `${delayCounter * 0.1}s`;
-                    delayCounter++;
+                    section.className = "animate-card"; section.style.animationDelay = `${delayCounter * 0.1}s`; delayCounter++;
+                    section.innerHTML = `<div class="flex items-center gap-3 mb-4"><span class="w-1 h-5 rounded-full bg-[var(--brand-accent)] opacity-80"></span><h2 class="text-sm font-bold text-[var(--text-sub)] uppercase tracking-wider">${cat.title}</h2></div>`;
                     
-                    section.innerHTML = `
-                        <div class="flex items-center gap-3 mb-4">
-                            <span class="w-1 h-5 rounded-full bg-[var(--brand-accent)] opacity-80 transition-colors duration-300"></span>
-                            <h2 class="text-sm font-bold text-[var(--text-sub)] uppercase tracking-wider">${cat.title}</h2>
-                        </div>
-                    `;
-                    
-                    const grid = document.createElement('div');
-                    grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-4";
+                    const grid = document.createElement('div'); grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-4";
                     filteredItems.forEach(app => {
                         grid.innerHTML += `
-                            <a href="${app.url}" target="_blank" rel="noopener noreferrer" 
-                               onclick="clearAllActiveStates(); this.blur();"
-                               class="app-card p-4 flex items-center gap-4 group cursor-pointer relative overflow-hidden">
-                                <div class="card-icon w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-[var(--icon-bg)] text-[var(--icon-color)] transition-all duration-300">
-                                    <i class="${app.icon} text-lg"></i>
-                                </div>
-                                <div class="flex-grow min-w-0">
-                                    <h3 class="font-bold text-[var(--text-main)] text-[15px] transition-colors">${app.name}</h3>
-                                    <p class="text-xs text-[var(--text-sub)] mt-1 truncate">${app.desc}</p>
-                                </div>
-                                <div class="transition-all">
-                                    <i class="fa-solid fa-chevron-right text-xs"></i>
-                                </div>
-                            </a>
-                        `;
+                            <a href="${app.url}" target="_blank" rel="noopener noreferrer" class="app-card p-4 flex items-center gap-4 group relative overflow-hidden">
+                                <div class="card-icon w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-[var(--icon-bg)] text-[var(--icon-color)] transition-all duration-300"><i class="${app.icon} text-lg"></i></div>
+                                <div class="flex-grow min-w-0"><h3 class="font-bold text-[var(--text-main)] text-[15px] transition-colors">${app.name}</h3><p class="text-xs text-[var(--text-sub)] mt-1 truncate">${app.desc}</p></div>
+                                <div class="transition-all"><i class="fa-solid fa-chevron-right text-xs"></i></div>
+                            </a>`;
                     });
-                    section.appendChild(grid);
-                    appContainer.appendChild(section);
+                    if(filteredItems.length === 0) grid.innerHTML = `<p class="text-xs text-[var(--text-sub)] italic">無任何捷徑</p>`;
+                    section.appendChild(grid); appContainer.appendChild(section);
                 }
             });
-
-            if (!hasResults) noResults.classList.remove('hidden');
-            else noResults.classList.add('hidden');
-            
-            attachTouchHandlers();
+            noResults.classList.toggle('hidden', hasResults);
         }
 
         let currentMode = localStorage.getItem('theme_mode') || 'auto';
-        function initTheme() { applyTheme(currentMode); }
-
         function applyTheme(mode) {
+            document.body.dataset.themeMode = mode; 
             let isDark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
             document.body.classList.toggle('dark-mode', isDark);
-            
-            const link = document.querySelector("link[rel~='icon']");
-            if(link) link.href = isDark ? iconAmber : iconBlue;
-            
+            const link = document.querySelector("link[rel~='icon']"); if(link) link.href = isDark ? iconAmber : iconBlue;
             const icon = document.getElementById('themeIcon');
-            if (mode === 'light') icon.className = 'fa-solid fa-sun text-lg';
-            else if (mode === 'dark') icon.className = 'fa-solid fa-moon text-lg';
-            else icon.className = 'fa-solid fa-circle-half-stroke text-lg';
+            icon.className = mode === 'light' ? 'fa-solid fa-sun text-lg' : mode === 'dark' ? 'fa-solid fa-moon text-lg' : 'fa-solid fa-circle-half-stroke text-lg';
             
-            updateGreeting(isDark);
+            const h = new Date().getHours();
+            const textEl = document.getElementById('greetingText'), iconEl = document.getElementById('greetingIcon'), containerEl = document.getElementById('greetingContainer');
+            if (h >= 5 && h < 12) { textEl.textContent = "早安，同學"; iconEl.className = "fa-regular fa-sun"; containerEl.className = `flex items-center gap-2 mb-1 ${isDark ? 'text-yellow-400' : 'text-yellow-300'}`; } 
+            else if (h >= 12 && h < 18) { textEl.textContent = "午安，同學"; iconEl.className = "fa-solid fa-sun"; containerEl.className = `flex items-center gap-2 mb-1 ${isDark ? 'text-orange-400' : 'text-yellow-300'}`; } 
+            else { textEl.textContent = "晚安，同學"; iconEl.className = "fa-solid fa-moon"; containerEl.className = `flex items-center gap-2 mb-1 ${isDark ? 'text-yellow-400' : 'text-yellow-300'}`; }
         }
 
         function toggleThemeMode(btn) {
-            const modes = ['light', 'dark', 'auto'];
-            const texts = ['已切換至淺色模式', '已切換至深色模式', '已切換至自動跟隨模式'];
-            const currentIndex = modes.indexOf(currentMode);
-            const nextIndex = (currentIndex + 1) % 3;
-            
-            currentMode = modes[nextIndex];
-            localStorage.setItem('theme_mode', currentMode);
-            applyTheme(currentMode);
-            showToast(texts[nextIndex]);
-            
-            if (btn) btn.blur();
+            const modes = ['light', 'dark', 'auto'], texts = ['已切換至淺色模式', '已切換至深色模式', '已切換至自動跟隨模式'];
+            const nextIndex = (modes.indexOf(currentMode) + 1) % 3;
+            currentMode = modes[nextIndex]; localStorage.setItem('theme_mode', currentMode); applyTheme(currentMode);
+            showToast(texts[nextIndex]); if (btn) btn.blur();
         }
 
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-            if (currentMode === 'auto') applyTheme('auto');
-        });
-
-        function showToast(text) {
-            const toast = document.getElementById('theme-toast');
-            toast.textContent = text;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
-        }
-
-        function updateGreeting(isDark) {
-            const h = new Date().getHours();
-            const textEl = document.getElementById('greetingText');
-            const iconEl = document.getElementById('greetingIcon');
-            const containerEl = document.getElementById('greetingContainer');
-            
-            containerEl.className = "flex items-center gap-2 mb-1";
-            if (h >= 5 && h < 12) {
-                textEl.textContent = "早安，同學";
-                iconEl.className = "fa-regular fa-sun";
-                // [修復] 淺色=黃，深色=黃
-                containerEl.className = `flex items-center gap-2 mb-1 ${isDark ? 'text-yellow-400' : 'text-yellow-300'}`;
-            } else if (h >= 12 && h < 18) {
-                textEl.textContent = "午安，同學";
-                iconEl.className = "fa-solid fa-sun";
-                // [修復] 淺色=黃，深色=橘
-                containerEl.className = `flex items-center gap-2 mb-1 ${isDark ? 'text-orange-400' : 'text-yellow-300'}`;
-            } else {
-                textEl.textContent = "晚安，同學";
-                iconEl.className = "fa-solid fa-moon";
-                // [修復] 淺色=黃，深色=黃
-                containerEl.className = `flex items-center gap-2 mb-1 ${isDark ? 'text-yellow-400' : 'text-yellow-300'}`;
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            initTheme();
-            renderCategories();
-        });
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (currentMode === 'auto') applyTheme('auto'); });
+        document.addEventListener('DOMContentLoaded', () => { applyTheme(currentMode); renderCategories(); });
     </script>
 </body>
 </html>
